@@ -1,9 +1,5 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
-import { Bar } from "react-chartjs-2";
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from "chart.js";
-
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 const Container = styled.div`
   padding: 20px;
@@ -74,46 +70,41 @@ const Container = styled.div`
 `;
 
 function Relatorios() {
-  const [dados, setDados] = useState({
-    receita: 45280,
-    consultas: 342,
-    novosPacientes: 47,
-    crescimento: 12.5,
-    comparecimento: 85,
-    totalAgendado: 245,
-    compareceram: 208,
-    faltaram: 28,
-    cancelaram: 9,
-    servicos: [
-      { nome: "Consulta Geral", consultas: 156, receita: 15600, variacao: 12 },
-      { nome: "Exames Cardiológicos", consultas: 89, receita: 26700, variacao: 8 },
-      { nome: "Dermatologia", consultas: 67, receita: 13400, variacao: -3 },
-      { nome: "Pediatria", consultas: 45, receita: 9000, variacao: 15 },
-      { nome: "Oftalmologia", consultas: 32, receita: 9600, variacao: 5 }
-    ]
-  });
+  const [relatorio, setRelatorio] = useState(null);
 
-  const dataChart = {
-    labels: ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun"],
-    datasets: [
-      {
-        label: "Receita",
-        data: [32000, 38000, 35000, 42000, 39000, 45000],
-        backgroundColor: "#009688"
-      }
-    ]
-  };
+  useEffect(() => {
+    const fetchDados = async () => {
+      // Aqui você vai chamar sua API real
+      const agendamentos = await fetch("http://localhost:5239/api/agendamentos")
+        .then((res) => res.json());
+      const clientes = await fetch("http://localhost:5239/api/clientes")
+        .then((res) => res.json());
+      const servicos = await fetch("http://localhost:5239/api/servicos")
+        .then((res) => res.json());
 
-  const optionsChart = {
-    responsive: true,
-    plugins: {
-      legend: { display: false }
-    }
-  };
+      const totalConsultas = agendamentos.data.$values.length;
+      const totalClientes = clientes.data.$values.length;
+      const listaServicos = servicos.data.$values;
 
-  const handleExport = () => {
-    alert("Exportar relatórios...");
-  };
+      const receita = agendamentos.data.$values.reduce((acc, ag) => acc + (ag.servico?.preco || 0), 0);
+      const compareceram = agendamentos.data.$values.filter((a) => a.statusAgenda === "HorarioMarcado").length;
+      const taxaComparecimento = ((compareceram / totalConsultas) * 100).toFixed(1);
+
+      setRelatorio({
+        totalConsultas,
+        totalClientes,
+        receita,
+        taxaComparecimento,
+        servicos: listaServicos
+      });
+    };
+
+    fetchDados();
+  }, []);
+
+  const handleExport = () => alert("Exportar relatórios...");
+
+  if (!relatorio) return <p>Carregando...</p>;
 
   return (
     <Container>
@@ -122,41 +113,24 @@ function Relatorios() {
 
       <div className="grid">
         <div className="card">
-          <div className="kpi"><span className="label">Receita Total</span><span className="value">R$ {dados.receita.toLocaleString()}</span></div>
-          <div className="kpi"><span className="label">Total de Consultas</span><span className="value">{dados.consultas}</span></div>
-          <div className="kpi"><span className="label">Novos Pacientes</span><span className="value">{dados.novosPacientes}</span></div>
-          <div className="kpi"><span className="label">Taxa de Crescimento</span><span className="value">{dados.crescimento}%</span></div>
+          <div className="kpi"><span className="label">Receita Total</span><span className="value">R$ {relatorio.receita.toLocaleString()}</span></div>
+          <div className="kpi"><span className="label">Total de Consultas</span><span className="value">{relatorio.totalConsultas}</span></div>
+          <div className="kpi"><span className="label">Total de Pacientes</span><span className="value">{relatorio.totalClientes}</span></div>
+          <div className="kpi"><span className="label">Taxa de Comparecimento</span><span className="value">{relatorio.taxaComparecimento}%</span></div>
         </div>
-        <div className="card">
-          <h4>Taxa de Comparecimento</h4>
-          <p style={{ fontSize: "28px", fontWeight: "bold" }}>{dados.comparecimento}%</p>
-          <div className="kpi"><span>Total Agendado</span><span>{dados.totalAgendado}</span></div>
-          <div className="kpi"><span>Compareceram</span><span>{dados.compareceram}</span></div>
-          <div className="kpi"><span>Faltaram</span><span>{dados.faltaram}</span></div>
-          <div className="kpi"><span>Cancelaram</span><span>{dados.cancelaram}</span></div>
-        </div>
-        <div className="card">
-          <h4>Receita por Período</h4>
-          <Bar data={dataChart} options={optionsChart} />
-        </div>
+
         <div className="card">
           <h4>Serviços Mais Populares</h4>
           <div className="services-list">
-            {dados.servicos.map((s, i) => (
-              <div key={i} className="service-item">
-                <span>{i + 1}. {s.nome}</span>
-                <span>{s.consultas} consultas - R$ {(s.receita/1000).toFixed(1)}k ({s.variacao >= 0 ? "+" : ""}{s.variacao}%)</span>
+            {relatorio.servicos.map((s, i) => (
+              <div key={s.idServico} className="service-item">
+                <span>{i + 1}. {s.nomeServico}</span>
+                <span>R$ {s.preco.toFixed(2)}</span>
               </div>
             ))}
           </div>
         </div>
-        <div className="card">
-          <h4>Exportar Relatórios</h4>
-          <div className="export">
-            <button onClick={handleExport}>Exportar PDF</button>
-            <button onClick={handleExport}>Exportar Excel</button>
-          </div>
-        </div>
+
       </div>
     </Container>
   );
