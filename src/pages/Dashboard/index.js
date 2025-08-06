@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
+const REACT_APP_PORT = process.env.REACT_APP_PORT;
 
 const Container = styled.div`
   padding: 20px;
@@ -66,9 +67,9 @@ function Dashboard() {
 
   useEffect(() => {
     const fetchDados = async () => {
-      const agendamentos = await fetch("http://localhost:5239/api/agendamentos").then(res => res.json());
-      const clientes = await fetch("http://localhost:5239/api/clientes").then(res => res.json());
-      const servicos = await fetch("http://localhost:5239/api/servicos").then(res => res.json());
+      const agendamentos = await fetch(`http://localhost:${REACT_APP_PORT}/api/agendamentos`).then(res => res.json());
+      const clientes = await fetch(`http://localhost:${REACT_APP_PORT}/api/clientes`).then(res => res.json());
+      const servicos = await fetch(`http://localhost:${REACT_APP_PORT}/api/servicos`).then(res => res.json());
 
       const consultasHoje = agendamentos.data.$values.filter(a => new Date(a.dataHoraInicio).toDateString() === new Date().toDateString()).length;
       const clientesNovos = clientes.data.$values.filter(c => new Date(c.dataCriacao) >= new Date(new Date().setDate(new Date().getDate() - 7))).length;

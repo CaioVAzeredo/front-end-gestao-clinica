@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import styled from "styled-components";
+const REACT_APP_PORT = process.env.REACT_APP_PORT;
+
 
 const Container = styled.div`
   padding: 20px;
@@ -124,7 +126,7 @@ function Servicos() {
   const [menuAtivo, setMenuAtivo] = useState(null);
 
   useEffect(() => {
-    axios.get("http://localhost:5239/api/servicos")
+    axios.get(`http://localhost:${REACT_APP_PORT}/api/servicos`)
       .then(response => {
         setServicos(response.data.data.$values);
       })

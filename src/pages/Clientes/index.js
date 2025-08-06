@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import styled from "styled-components";
+const REACT_APP_PORT = process.env.REACT_APP_PORT;
 
 const Container = styled.div`
   display: flex;
@@ -88,7 +89,7 @@ function Clientes() {
 
   const fetchClientes = async () => {
     try {
-      const response = await axios.get("http://localhost:5239/api/clientes");
+      const response = await axios.get(`http://localhost:${REACT_APP_PORT}/api/clientes`);
       setClientes(response.data.data.$values);
     } catch (error) {
       console.error("Erro ao buscar clientes:", error);
@@ -104,7 +105,7 @@ function Clientes() {
   const handleExcluir = async (id) => {
     if (window.confirm("Tem certeza que deseja excluir?")) {
       try {
-        await axios.delete(`http://localhost:5239/api/clientes/${id}`);
+        await axios.delete(`http://localhost:${REACT_APP_PORT}/api/clientes/${id}`);
         fetchClientes();
       } catch (error) {
         console.error("Erro ao excluir cliente:", error);

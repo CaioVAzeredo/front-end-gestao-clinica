@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import styled from "styled-components";
+const REACT_APP_PORT = process.env.REACT_APP_PORT;
+
 
 const Container = styled.div`
   padding: 20px;
@@ -83,7 +85,7 @@ function ConfiguracoesConta() {
 
   useEffect(() => {
     axios
-      .get("http://localhost:5239/api/funcionarios")
+      .get(`http://localhost:${REACT_APP_PORT}/api/funcionarios`)
       .then((response) => {
         const funcionario =
           response.data.$values && response.data.$values.length > 0
@@ -112,7 +114,7 @@ function ConfiguracoesConta() {
 
   const handleSalvar = () => {
     axios
-      .put(`http://localhost:5239/api/funcionarios/2`, form)
+      .put(`http://localhost:${REACT_APP_PORT}/api/funcionarios/2`, form)
       .then(() => alert("Dados atualizados com sucesso!"))
       .catch((err) => console.error("Erro ao salvar:", err));
   };

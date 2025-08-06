@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
+const REACT_APP_PORT = process.env.REACT_APP_PORT;
 
 const Container = styled.div`
   padding: 20px;
@@ -75,11 +76,11 @@ function Relatorios() {
   useEffect(() => {
     const fetchDados = async () => {
       // Aqui você vai chamar sua API real
-      const agendamentos = await fetch("http://localhost:5239/api/agendamentos")
+      const agendamentos = await fetch(`http://localhost:${REACT_APP_PORT}/api/agendamentos`)
         .then((res) => res.json());
-      const clientes = await fetch("http://localhost:5239/api/clientes")
+      const clientes = await fetch(`http://localhost:${REACT_APP_PORT}/api/clientes`)
         .then((res) => res.json());
-      const servicos = await fetch("http://localhost:5239/api/servicos")
+      const servicos = await fetch(`http://localhost:${REACT_APP_PORT}/api/servicos`)
         .then((res) => res.json());
 
       const totalConsultas = agendamentos.data.$values.length;

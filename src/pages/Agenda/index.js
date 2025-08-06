@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import styled from "styled-components";
+const REACT_APP_PORT = process.env.REACT_APP_PORT;
 
 const Container = styled.div`
   padding: 20px;
@@ -78,7 +79,7 @@ function Agenda() {
 
   const fetchAgendamentos = async () => {
     try {
-      const response = await axios.get("http://localhost:5239/api/agendamentos");
+      const response = await axios.get(`http://localhost:${REACT_APP_PORT}/api/agendamentos`);
       setAgendamentos(response.data.data.$values);
     } catch (error) {
       console.error("Erro ao buscar agendamentos:", error);
