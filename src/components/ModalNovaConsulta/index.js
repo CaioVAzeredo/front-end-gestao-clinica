@@ -86,7 +86,7 @@ function ModalNovaConsulta({ onClose }) {
   const [consulta, setConsulta] = useState({
     clienteId: "",
     servicoId: "",
-    funcionarioId: 2, // <-- ID fixo temporário
+    funcionarioId: "", // <-- ID fixo temporário
     dataHoraInicio: "",
     duracaoAtendimento: 0,
     observacoes: "",
@@ -95,21 +95,25 @@ function ModalNovaConsulta({ onClose }) {
 
   const [clientes, setClientes] = useState([]);
   const [servicos, setServicos] = useState([]);
+const [funcionarios, setFuncionarios] = useState([]);
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const resClientes = await fetch(`http://localhost:${REACT_APP_PORT}/api/clientes`).then(r => r.json());
-        const resServicos = await fetch(`http://localhost:${REACT_APP_PORT}/api/servicos`).then(r => r.json());
+useEffect(() => {
+  async function fetchData() {
+    try {
+      const resClientes = await fetch(`http://localhost:${REACT_APP_PORT}/api/clientes`).then(r => r.json());
+      const resServicos = await fetch(`http://localhost:${REACT_APP_PORT}/api/servicos`).then(r => r.json());
+      const resFuncionarios = await fetch(`http://localhost:${REACT_APP_PORT}/api/funcionarios`).then(r => r.json());
 
-        setClientes(resClientes?.data?.$values ?? []);
-        setServicos(resServicos?.data?.$values ?? []);
-      } catch (error) {
-        console.error("Erro ao carregar dados:", error);
-      }
+      setClientes(resClientes?.data?.$values ?? []);
+      setServicos(resServicos?.data?.$values ?? []);
+      setFuncionarios(resFuncionarios?.$values ?? []); // <- note que esse não tem `.data`
+    } catch (error) {
+      console.error("Erro ao carregar dados:", error);
     }
-    fetchData();
-  }, []);
+  }
+  fetchData();
+}, []);
+
 
   async function salvarConsulta() {
     try {
@@ -141,6 +145,18 @@ function ModalNovaConsulta({ onClose }) {
             <option key={c.idCliente} value={c.idCliente}>{c.nome}</option>
           ))}
         </select>
+<label>Funcionário</label>
+<select
+  value={consulta.funcionarioId}
+  onChange={e => setConsulta({ ...consulta, funcionarioId: parseInt(e.target.value) })}
+>
+  <option value="">Selecione...</option>
+  {funcionarios.map(f => (
+    <option key={f.idFuncionario} value={f.idFuncionario}>
+      {f.nome}
+    </option>
+  ))}
+</select>
 
         <label>Serviço</label>
         <select

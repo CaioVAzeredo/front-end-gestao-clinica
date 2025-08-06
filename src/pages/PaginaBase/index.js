@@ -1,6 +1,14 @@
 import { useState } from "react";
 import styled from "styled-components";
-import { FiHome, FiCalendar, FiUsers, FiActivity, FiBarChart2, FiSettings } from "react-icons/fi";
+import {
+  FiHome,
+  FiCalendar,
+  FiUsers,
+  FiActivity,
+  FiBarChart2,
+  FiSettings,
+  FiBriefcase,
+} from "react-icons/fi";
 import Header from "../../components/Header";
 import DashBoard from "../Dashboard";
 import Agenda from "../Agenda";
@@ -8,6 +16,7 @@ import Clientes from "../Clientes";
 import Servicos from "../Servicos";
 import Relatorios from "../Relatorios";
 import Configuracoes from "../Configuracoes";
+import Funcionarios from "../Funcionarios"; // ✅ import
 
 const Layout = styled.div`
   display: flex;
@@ -95,7 +104,6 @@ const MenuItem = styled.li`
   }
 `;
 
-
 const Content = styled.div`
   flex: 1;
   display: flex;
@@ -121,6 +129,7 @@ function PaginaBase() {
     dashboard: <DashBoard setPagina={setPagina} setTitulo={setTitulo} />,
     agenda: <Agenda />,
     clientes: <Clientes />,
+    Funcionarios: <Funcionarios />, // ✅ adicionado
     servicos: <Servicos />,
     relatorios: <Relatorios />,
     configuracoes: <Configuracoes />,
@@ -130,6 +139,7 @@ function PaginaBase() {
     { key: "dashboard", label: "Dashboard", icon: <FiHome /> },
     { key: "agenda", label: "Agenda", icon: <FiCalendar /> },
     { key: "clientes", label: "Clientes", icon: <FiUsers /> },
+    { key: "Funcionarios", label: "Funcionários", icon: <FiBriefcase /> }, // ✅ novo item
     { key: "servicos", label: "Serviços", icon: <FiActivity /> },
     { key: "relatorios", label: "Relatórios", icon: <FiBarChart2 /> },
     { key: "configuracoes", label: "Configurações", icon: <FiSettings /> },
@@ -167,20 +177,15 @@ function PaginaBase() {
         <Sidebar collapsed={collapsed} visible={showSidebarMobile}>
           <Menu>
             {menuItems.map((item) => (
-              <MenuItem
-  key={item.key}
-  collapsed={collapsed}
-  mobileOpen={showSidebarMobile} // novo
->
-  <button
-    className={pagina === item.key ? "ativo" : ""}
-    onClick={() => handleChangePage(item)}
-  >
-    {item.icon}
-    <span>{item.label}</span>
-  </button>
-</MenuItem>
-
+              <MenuItem key={item.key} collapsed={collapsed} mobileOpen={showSidebarMobile}>
+                <button
+                  className={pagina === item.key ? "ativo" : ""}
+                  onClick={() => handleChangePage(item)}
+                >
+                  {item.icon}
+                  <span>{item.label}</span>
+                </button>
+              </MenuItem>
             ))}
           </Menu>
         </Sidebar>
