@@ -6,13 +6,6 @@ const Container = styled.div`
   display: flex;
   height: 100vh;
 
-  .menu-lateral {
-    width: 250px;
-    background: #f7f7f7;
-    padding: 20px;
-    border-right: 1px solid #ddd;
-  }
-
   .conteudo {
     flex: 1;
     padding: 20px;
@@ -66,91 +59,123 @@ const Container = styled.div`
     background: #dc3545;
     color: white;
   }
+
+  .paginacao {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin-top: 10px;
+    gap: 10px;
+  }
+
+  .paginacao select,
+  .paginacao button {
+    padding: 5px 10px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    cursor: pointer;
+  }
+
+  .paginacao span {
+    font-size: 14px;
+  }
 `;
 
 function Clientes() {
-    const [clientes, setClientes] = useState([]);
+  const [clientes, setClientes] = useState([]);
+  const [page, setPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
 
-    const fetchClientes = async () => {
-        try {
-            const response = await axios.get("http://localhost:5239/api/clientes");
-            setClientes(response.data.data.$values);
-        } catch (error) {
-            console.error("Erro ao buscar clientes:", error);
-        }
-    };
+  const fetchClientes = async () => {
+    try {
+      const response = await axios.get("http://localhost:5239/api/clientes");
+      setClientes(response.data.data.$values);
+    } catch (error) {
+      console.error("Erro ao buscar clientes:", error);
+    }
+  };
 
-    useEffect(() => {
+  useEffect(() => {
+    fetchClientes();
+  }, []);
+
+  const handleNovo = () => alert("Abrir modal para criar novo cliente");
+  const handleEditar = (cliente) => alert(`Editar cliente: ${cliente.nome}`);
+  const handleExcluir = async (id) => {
+    if (window.confirm("Tem certeza que deseja excluir?")) {
+      try {
+        await axios.delete(`http://localhost:5239/api/clientes/${id}`);
         fetchClientes();
-    }, []);
+      } catch (error) {
+        console.error("Erro ao excluir cliente:", error);
+      }
+    }
+  };
 
-    const handleNovo = () => {
-        alert("Abrir modal para criar novo cliente");
-    };
+  const startIndex = (page - 1) * rowsPerPage;
+  const paginatedClientes = clientes.slice(startIndex, startIndex + rowsPerPage);
+  const totalPages = Math.ceil(clientes.length / rowsPerPage);
 
-    const handleEditar = (cliente) => {
-        alert(`Editar cliente: ${cliente.nome}`);
-    };
+  return (
+    <Container>
+      <div className="conteudo">
+        <div className="topo">
+          <button className="btn btn-novo" onClick={handleNovo}>
+            + Novo Cliente
+          </button>
+        </div>
 
-    const handleExcluir = async (id) => {
-        if (window.confirm("Tem certeza que deseja excluir?")) {
-            try {
-                await axios.delete(`http://localhost:5239/api/clientes/${id}`);
-                fetchClientes();
-            } catch (error) {
-                console.error("Erro ao excluir cliente:", error);
-            }
-        }
-    };
+        <table>
+          <thead>
+            <tr>
+              <th>Cliente</th>
+              <th>Contato</th>
+              <th>Status</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            {paginatedClientes.map((cliente) => (
+              <tr key={cliente.idCliente}>
+                <td>{cliente.nome}</td>
+                <td>
+                  {cliente.telefone}
+                  <br />
+                  {cliente.email}
+                </td>
+                <td>{cliente.ativo ? "Ativo" : "Inativo"}</td>
+                <td>
+                  <button className="btn btn-editar" onClick={() => handleEditar(cliente)}>
+                    Atualizar
+                  </button>
+                  <button className="btn btn-excluir" onClick={() => handleExcluir(cliente.idCliente)}>
+                    Excluir
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
 
-    return (
-        <Container>
-            <div className="conteudo">
-                <div className="topo">
-                    <button className="btn btn-novo" onClick={handleNovo}>
-                        + Novo Cliente
-                    </button>
-                </div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Cliente</th>
-                            <th>Contato</th>
-                            <th>Status</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {clientes.map((cliente) => (
-                            <tr key={cliente.idCliente}>
-                                <td>{cliente.nome}</td>
-                                <td>
-                                    {cliente.telefone}
-                                    <br />
-                                    {cliente.email}
-                                </td>
-                                <td>{cliente.ativo ? "Ativo" : "Inativo"}</td>
-                                <td>
-                                    <button
-                                        className="btn btn-editar"
-                                        onClick={() => handleEditar(cliente)}
-                                    >
-                                        Atualizar
-                                    </button>
-                                    <button
-                                        className="btn btn-excluir"
-                                        onClick={() => handleExcluir(cliente.idCliente)}
-                                    >
-                                        Excluir
-                                    </button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-        </Container>
-    );
+        <div className="paginacao">
+          <span>
+            {startIndex + 1}-{Math.min(startIndex + rowsPerPage, clientes.length)} de {clientes.length}
+          </span>
+          <select value={rowsPerPage} onChange={(e) => { setRowsPerPage(Number(e.target.value)); setPage(1); }}>
+            {[5, 10, 25, 50].map((size) => (
+              <option key={size} value={size}>
+                {size}
+              </option>
+            ))}
+          </select>
+          <button disabled={page === 1} onClick={() => setPage(1)}>{"<<"}</button>
+          <button disabled={page === 1} onClick={() => setPage((p) => p - 1)}>{"<"}</button>
+          <button disabled={page === totalPages} onClick={() => setPage((p) => p + 1)}>{">"}</button>
+          <button disabled={page === totalPages} onClick={() => setPage(totalPages)}>{">>"}</button>
+        </div>
+      </div>
+    </Container>
+  );
 }
 
 export default Clientes;

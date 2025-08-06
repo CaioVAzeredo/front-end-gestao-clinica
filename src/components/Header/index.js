@@ -1,23 +1,112 @@
-import styled from "styled-components";
+import { useEffect, useState } from 'react';
+import styled from 'styled-components';
+import axios from 'axios';
 
 const HeaderContainer = styled.div`
-padding: 20px;`
-function Header({ titulo, setPagina, setTitulo, setFiltro, setIcone }) {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 13px;
+  background: #fff;
+  border-bottom: 1px solid #eee;
+`;
 
+const Title = styled.h2`
+  font-size: 1.5rem;
+  color: #333;
+`;
 
-  function paginaPerfil() {
-    setPagina("perfil");
-    setTitulo("Perfil");
-    setFiltro("perfil");
-    setIcone("perfil");
+const HeaderRight = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 15px;
+`;
+
+const UserInfo = styled.div`
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  gap: 10px;
+
+  &:hover {
+    opacity: 0.8;
   }
+`;
+
+const Avatar = styled.div`
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #009688;
+  color: #fff;
+  font-weight: bold;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const UserDetails = styled.div`
+  display: flex;
+  flex-direction: column;
+`;
+
+const UserName = styled.span`
+  font-size: 14px;
+  font-weight: bold;
+`;
+
+const UserStatus = styled.span`
+  font-size: 12px;
+  color: ${props => (props.online ? 'green' : 'red')};
+`;
+
+function Header({ titulo, setPagina, setTitulo, setFiltro, setIcone }) {
+  const [usuario, setUsuario] = useState(null);
+
+  useEffect(() => {
+    async function fetchUsuario() {
+      try {
+        const response = await axios.get('http://localhost:5239/api/funcionarios');
+        const data = response.data.$values[0];
+        setUsuario(data);
+      } catch (error) {
+        console.error('Erro ao buscar usuário:', error);
+      }
+    }
+    fetchUsuario();
+  }, []);
+
+  function irConfiguracoes() {
+    setPagina('configuracoes');
+    setTitulo('Configurações');
+    setFiltro('configuracoes');
+    setIcone('configuracoes');
+  }
+
+  const getInitials = (nome) => {
+    if (!nome) return '';
+    const partes = nome.split(' ');
+    const iniciais = partes.map((parte) => parte[0]).join('');
+    return iniciais.substring(0, 2).toUpperCase();
+  };
 
   return (
     <HeaderContainer>
-      <h2>Gerenciador de {titulo}</h2>
-      <div>
-        <img className='foto' onClick={paginaPerfil} />
-      </div>
+      <Title>Gerenciador de {titulo}</Title>
+      <HeaderRight>
+        {usuario && (
+          <UserInfo onClick={irConfiguracoes}>
+            <Avatar>{getInitials(usuario.nome)}</Avatar>
+            <UserDetails>
+              <UserName>{usuario.nome}</UserName>
+              <UserStatus online={usuario.ativo}>
+                {usuario.ativo ? 'Online' : 'Offline'}
+              </UserStatus>
+            </UserDetails>
+          </UserInfo>
+        )}
+      </HeaderRight>
     </HeaderContainer>
   );
 }

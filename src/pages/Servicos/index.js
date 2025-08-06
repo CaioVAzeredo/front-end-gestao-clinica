@@ -61,6 +61,7 @@ const Container = styled.div`
     align-items: center;
     gap: 5px;
     font-weight: bold;
+    padding: 26px;
   }
 
   .acoes-menu {
@@ -155,7 +156,6 @@ function Servicos() {
       <table>
         <thead>
           <tr>
-            <th></th>
             <th>Categoria</th>
             <th>Serviço</th>
             <th>Duração</th>
@@ -166,9 +166,8 @@ function Servicos() {
         <tbody>
           {servicos.map((servico, index) => (
             <tr key={servico.idServico}>
-              <td><input type="checkbox" /></td>
               <td className="categoria">
-                <span style={{color:"#009688"}}>●</span> {servico.categoria.nomeCategoria}
+                <span style={{ color: "#009688" }}>●</span> {servico.categoria.nomeCategoria}
               </td>
               <td>{servico.nomeServico}</td>
               <td>{servico.duracaoEstimada}m</td>
