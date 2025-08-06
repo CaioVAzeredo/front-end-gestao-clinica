@@ -3,16 +3,17 @@ import axios from "axios";
 import styled from "styled-components";
 const REACT_APP_PORT = process.env.REACT_APP_PORT;
 
-
 const Container = styled.div`
   padding: 20px;
+  padding-top: 100px;
   font-family: Arial, sans-serif;
+  position: relative;
 
   h2 {
     margin-bottom: 5px;
     text-align: center;
   }
-  
+
   .bemvindo {
     font-size: 50px;
     text-align: center;
@@ -22,8 +23,25 @@ const Container = styled.div`
 
   p.subtitulo {
     margin-bottom: 20px;
-  text-align: center;
+    text-align: center;
     color: #666;
+  }
+
+  .logout {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    padding: 8px 14px;
+    background: #e53935;
+    border: none;
+    border-radius: 5px;
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+  }
+
+  .logout:hover {
+    background: #c62828;
   }
 
   .form-section {
@@ -64,6 +82,41 @@ const Container = styled.div`
     color: white;
     border-radius: 5px;
     cursor: pointer;
+  }
+
+  .btn-salvar:hover {
+    background: #00796b;
+  }
+
+  /* ---- RESPONSIVIDADE ---- */
+  @media (max-width: 768px) {
+    .bemvindo {
+      font-size: 32px;
+    }
+
+    .linha {
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    input {
+      font-size: 16px;
+    }
+
+    h2 {
+      font-size: 24px;
+    }
+
+    p.subtitulo {
+      font-size: 14px;
+    }
+
+    .logout {
+      top: 10px;
+      right: 10px;
+      padding: 6px 12px;
+      font-size: 13px;
+    }
   }
 `;
 
@@ -119,8 +172,16 @@ function ConfiguracoesConta() {
       .catch((err) => console.error("Erro ao salvar:", err));
   };
 
+  const handleLogout = () => {
+    alert("Logout realizado!");
+    // Aqui você pode limpar tokens e redirecionar, ex:
+    // localStorage.removeItem("token");
+    // window.location.href = "/login";
+  };
+
   return (
     <Container>
+      <button className="logout" onClick={handleLogout}>Logout</button>
       {usuario && <div className="bemvindo">Olá, {usuario}. Seja bem-vindo!</div>}
       <h2>Configurações da Conta</h2>
       <p className="subtitulo">Atualize suas informações pessoais</p>

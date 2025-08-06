@@ -80,6 +80,53 @@ const Container = styled.div`
   .paginacao span {
     font-size: 14px;
   }
+
+  @media (max-width: 768px) {
+  table {
+    border: 0;
+  }
+
+  table thead {
+    display: none;
+  }
+
+  table tbody tr {
+    display: block;
+    margin-bottom: 15px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    padding: 10px;
+  }
+
+  table tbody td {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 5px;
+    font-size: 14px;
+    border: none;
+    word-break: break-word; /* evita estouro de texto */
+  }
+
+  table tbody td::before {
+    content: attr(data-label);
+    font-weight: bold;
+    flex: 1;
+    text-align: left;
+  }
+
+  /* Botões ocupando a linha inteira */
+  table tbody td[data-label="Ações"] {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  table tbody td[data-label="Ações"] button {
+    width: 100%;
+  }
+}
+
+
 `;
 
 function Clientes() {
@@ -125,7 +172,22 @@ function Clientes() {
             + Novo Cliente
           </button>
         </div>
-
+        <div className="paginacao">
+          <span>
+            {startIndex + 1}-{Math.min(startIndex + rowsPerPage, clientes.length)} de {clientes.length}
+          </span>
+          <select value={rowsPerPage} onChange={(e) => { setRowsPerPage(Number(e.target.value)); setPage(1); }}>
+            {[5, 10, 25, 50].map((size) => (
+              <option key={size} value={size}>
+                {size}
+              </option>
+            ))}
+          </select>
+          <button disabled={page === 1} onClick={() => setPage(1)}>{"<<"}</button>
+          <button disabled={page === 1} onClick={() => setPage((p) => p - 1)}>{"<"}</button>
+          <button disabled={page === totalPages} onClick={() => setPage((p) => p + 1)}>{">"}</button>
+          <button disabled={page === totalPages} onClick={() => setPage(totalPages)}>{">>"}</button>
+        </div>
         <table>
           <thead>
             <tr>
@@ -138,24 +200,21 @@ function Clientes() {
           <tbody>
             {paginatedClientes.map((cliente) => (
               <tr key={cliente.idCliente}>
-                <td>{cliente.nome}</td>
-                <td>
+                <td data-label="Cliente">{cliente.nome}</td>
+                <td data-label="Contato">
                   {cliente.telefone}
                   <br />
                   {cliente.email}
                 </td>
-                <td>{cliente.ativo ? "Ativo" : "Inativo"}</td>
-                <td>
-                  <button className="btn btn-editar" onClick={() => handleEditar(cliente)}>
-                    Atualizar
-                  </button>
-                  <button className="btn btn-excluir" onClick={() => handleExcluir(cliente.idCliente)}>
-                    Excluir
-                  </button>
+                <td data-label="Status">{cliente.ativo ? "Ativo" : "Inativo"}</td>
+                <td data-label="Ações">
+                  <button className="btn btn-editar" onClick={() => handleEditar(cliente)}>Atualizar</button>
+                  <button className="btn btn-excluir" onClick={() => handleExcluir(cliente.idCliente)}>Excluir</button>
                 </td>
               </tr>
             ))}
           </tbody>
+
         </table>
 
         <div className="paginacao">

@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
-import ModalCadastrarCliente from "../../components/ModalCadastrarCliente"; // import do modal
-import ModalNovaConsulta from "../../components/ModalNovaConsulta"; // <-- ADICIONADO
+import ModalCadastrarCliente from "../../components/ModalCadastrarCliente";
+import ModalNovaConsulta from "../../components/ModalNovaConsulta";
+
 const REACT_APP_PORT = process.env.REACT_APP_PORT;
 
 const Container = styled.div`
@@ -30,6 +31,7 @@ const Container = styled.div`
     font-size: 28px;
     font-weight: bold;
     margin-top: 5px;
+    word-break: break-word;
   }
 
   .positive {
@@ -37,21 +39,52 @@ const Container = styled.div`
     font-size: 14px;
   }
 
+.list {
+  margin-top: 10px;
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 10px;
+}
+
+/* estilo do card */
+.list-item {
+  flex: 0 0 auto;
+  min-width: 200px;
+  border: 1px solid #f0f0f0;
+  border-radius: 6px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: #fafafa;
+  font-size: 14px;
+}
+
+.list-item span:first-child {
+  font-weight: bold;
+}
+
+/* --- ALTERAÇÃO PARA TELAS PEQUENAS --- */
+@media (max-width: 480px) {
   .list {
-    margin-top: 10px;
+    flex-direction: column; /* vira coluna no mobile */
+    overflow-x: hidden; /* remove scroll horizontal no mobile */
   }
 
   .list-item {
-    display: flex;
-    justify-content: space-between;
-    padding: 8px 0;
-    border-bottom: 1px solid #f0f0f0;
+    min-width: 100%; /* ocupa toda a largura */
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+    background: #fff;
   }
+}
+
 
   .actions {
     margin-top: 20px;
     display: flex;
     gap: 10px;
+    flex-wrap: wrap; /* importante no mobile */
   }
 
   button {
@@ -61,13 +94,44 @@ const Container = styled.div`
     border: none;
     border-radius: 5px;
     cursor: pointer;
+    flex: 1 1 auto; /* para ocupar largura no mobile */
+    min-width: 120px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 10px;
+
+    .grid {
+      grid-template-columns: 1fr; /* força 1 card por linha */
+      gap: 10px;
+    }
+
+    .card {
+      padding: 15px;
+    }
+
+    .title {
+      font-size: 16px;
+    }
+
+    .value {
+      font-size: 22px;
+    }
+
+    .list-item {
+      font-size: 12px;
+    }
+
+    button {
+      width: 100%; /* botões ocupando toda largura */
+    }
   }
 `;
 
 function Dashboard({ setPagina, setTitulo }) {
   const [dados, setDados] = useState(null);
   const [showModal, setShowModal] = useState(false);
-  const [showModalConsulta, setShowModalConsulta] = useState(false); // <-- ADICIONADO
+  const [showModalConsulta, setShowModalConsulta] = useState(false);
 
   function pagRelatorios() {
     setPagina("relatorios");
@@ -127,26 +191,40 @@ function Dashboard({ setPagina, setTitulo }) {
       <div className="card" style={{ marginTop: 20 }}>
         <div className="title">Próximos Agendamentos</div>
         <div className="list">
-          {dados.proximos.map((ag, i) => (
-            <div key={i} className="list-item">
-              <span>
-                {new Date(ag.dataHoraInicio).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-              </span>
-              <span>{ag.cliente?.nome}</span>
-              <span>{ag.servico?.nomeServico}</span>
+          {dados.proximos.length === 0 ? (
+            <div style={{ padding: "10px", fontStyle: "italic", color: "#777" }}>
+              Nenhum agendamento encontrado
             </div>
-          ))}
+          ) : (
+            dados.proximos.map((ag, index) => {
+              const hora = new Date(ag.dataHoraInicio).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit"
+              });
+              const nome = ag.cliente?.nome || "Sem nome";
+              const servico = ag.servico?.nomeServico || "Sem serviço";
+
+              return (
+                <div key={index} className="list-item">
+                  <span>{hora}</span>
+                  <span>{nome}</span>
+                  <span>{servico}</span>
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
 
+
       <div className="actions">
-        <button onClick={() => setShowModalConsulta(true)}>Nova Consulta</button> {/* <-- ADICIONADO */}
+        <button onClick={() => setShowModalConsulta(true)}>Nova Consulta</button>
         <button onClick={() => setShowModal(true)}>Cadastrar Cliente</button>
         <button onClick={pagRelatorios}>Ver Relatórios</button>
       </div>
 
       {showModal && <ModalCadastrarCliente onClose={() => setShowModal(false)} />}
-      {showModalConsulta && <ModalNovaConsulta onClose={() => setShowModalConsulta(false)} />} {/* <-- ADICIONADO */}
+      {showModalConsulta && <ModalNovaConsulta onClose={() => setShowModalConsulta(false)} />}
     </Container>
   );
 }

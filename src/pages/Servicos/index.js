@@ -3,7 +3,6 @@ import axios from "axios";
 import styled from "styled-components";
 const REACT_APP_PORT = process.env.REACT_APP_PORT;
 
-
 const Container = styled.div`
   padding: 20px;
   font-family: Arial, sans-serif;
@@ -13,6 +12,8 @@ const Container = styled.div`
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 10px;
   }
 
   h2 {
@@ -43,10 +44,15 @@ const Container = styled.div`
     overflow: hidden;
   }
 
-  th, td {
+  th,
+  td {
     text-align: left;
     padding: 12px;
     border-bottom: 1px solid #eee;
+    white-space: normal;      /* Permite quebra de linha */
+    word-wrap: break-word;    /* Quebra palavras longas */
+    overflow-wrap: break-word;
+    max-width: 220px;         /* Limita a largura da célula */
   }
 
   th {
@@ -58,30 +64,36 @@ const Container = styled.div`
     background: #f9f9f9;
   }
 
-  .categoria {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-weight: bold;
-    padding: 26px;
-  }
+.categoria {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: bold;
+  padding: 5px 0;    /* menor padding */
+  white-space: normal; /* permitir quebra normal, mas sem verticalizar */
+}
 
-  .acoes-menu {
-    position: relative;
-  }
 
-  .acoes-opcoes {
-    position: absolute;
-    top: 30px;
-    right: 0;
-    background: #fff;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    border-radius: 5px;
-    padding: 10px;
-    display: flex;
-    flex-direction: column;
-    z-index: 10;
-  }
+.acoes-menu {
+  position: relative;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.acoes-opcoes {
+  position: fixed;    /* ao invés de absolute */
+  top: var(--pos-top);  /* calculado dinamicamente */
+  left: var(--pos-left);
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  border-radius: 5px;
+  padding: 8px 0;
+  display: flex;
+  flex-direction: column;
+  z-index: 9999;  /* garantir que fica na frente */
+  min-width: 160px;
+}
 
   .acoes-opcoes button {
     background: none;
@@ -106,18 +118,88 @@ const Container = styled.div`
     color: #333;
   }
 
-  .btn-mais {
-    padding: 6px 10px;
-    border: none;
-    background: #009688;
-    color: white;
-    border-radius: 4px;
-    cursor: pointer;
-    margin-left: 10px;
-  }
 
-  .btn-mais:hover {
-    background: #00796b;
+.btn-mais {
+  padding: 0;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: #009688;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+.btn-mais:hover {
+  background: #00796b;
+}
+
+  /* --- RESPONSIVIDADE --- */
+  @media (max-width: 768px) {
+    table thead {
+      display: none;
+    }
+
+    table,
+    tbody,
+    tr,
+    td {
+      display: block;
+      width: 100%;
+    }
+
+    tr {
+      margin-bottom: 15px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      padding: 10px;
+    }
+
+td {
+  border: none;
+  display: flex;
+  flex-direction: row;  /* impede texto ficar vertical */
+  justify-content: space-between;
+  padding: 8px 5px;
+  font-size: 14px;
+  word-break: break-word;
+  white-space: normal;
+}
+
+td::before {
+  content: attr(data-label);
+  font-weight: bold;
+  text-align: left;
+  margin-right: 10px;
+}
+
+
+
+    td[data-label=""] {
+      justify-content: flex-end;
+    }
+
+.acoes-opcoes {
+  position: fixed;    /* ao invés de absolute */
+  top: var(--pos-top);  /* calculado dinamicamente */
+  left: var(--pos-left);
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  border-radius: 5px;
+  padding: 8px 0;
+  display: flex;
+  flex-direction: column;
+  z-index: 9999;  /* garantir que fica na frente */
+  min-width: 160px;
+}
+
   }
 `;
 
@@ -126,22 +208,42 @@ function Servicos() {
   const [menuAtivo, setMenuAtivo] = useState(null);
 
   useEffect(() => {
-    axios.get(`http://localhost:${REACT_APP_PORT}/api/servicos`)
-      .then(response => {
+    axios
+      .get(`http://localhost:${REACT_APP_PORT}/api/servicos`)
+      .then((response) => {
         setServicos(response.data.data.$values);
       })
-      .catch(error => console.error("Erro ao carregar serviços:", error));
+      .catch((error) => console.error("Erro ao carregar serviços:", error));
   }, []);
 
-  const handleMenuToggle = (index) => {
-    setMenuAtivo(menuAtivo === index ? null : index);
-  };
+const handleMenuToggle = (index, event) => {
+  const rect = event.currentTarget.getBoundingClientRect();
+  const menuWidth = 160; // largura mínima definida no CSS do menu
+  const spaceRight = window.innerWidth - rect.right;
 
-  const handleEditarServico = (servico) => alert(`Editar serviço: ${servico.nomeServico}`);
-  const handleRemoverServico = (servico) => alert(`Remover serviço: ${servico.nomeServico}`);
-  const handleEditarCategoria = (servico) => alert(`Editar categoria: ${servico.categoria.nomeCategoria}`);
-  const handleRemoverCategoria = (servico) => alert(`Remover categoria: ${servico.categoria.nomeCategoria}`);
+  let left;
+  // se não houver espaço à direita, abre deslocado para a esquerda
+  if (spaceRight < menuWidth) {
+    left = rect.right - menuWidth;
+  } else {
+    left = rect.left;
+  }
 
+  document.documentElement.style.setProperty('--pos-top', `${rect.bottom + window.scrollY}px`);
+  document.documentElement.style.setProperty('--pos-left', `${left + window.scrollX}px`);
+  setMenuAtivo(menuAtivo === index ? null : index);
+};
+
+
+
+  const handleEditarServico = (servico) =>
+    alert(`Editar serviço: ${servico.nomeServico}`);
+  const handleRemoverServico = (servico) =>
+    alert(`Remover serviço: ${servico.nomeServico}`);
+  const handleEditarCategoria = (servico) =>
+    alert(`Editar categoria: ${servico.categoria.nomeCategoria}`);
+  const handleRemoverCategoria = (servico) =>
+    alert(`Remover categoria: ${servico.categoria.nomeCategoria}`);
   const handleAdicionarServico = () => {
     alert("Abrir modal para adicionar novo serviço");
   };
@@ -168,29 +270,47 @@ function Servicos() {
         <tbody>
           {servicos.map((servico, index) => (
             <tr key={servico.idServico}>
-              <td className="categoria">
-                <span style={{ color: "#009688" }}>●</span> {servico.categoria.nomeCategoria}
+              <td data-label="Categoria" className="categoria">
+                <span style={{ color: "#009688" }}>●</span>{" "}
+                {servico.categoria.nomeCategoria}
               </td>
-              <td>{servico.nomeServico}</td>
-              <td>{servico.duracaoEstimada}m</td>
-              <td>R$ {servico.preco.toFixed(2)}</td>
-              <td className="acoes-menu">
-                <button className="btn-mais" onClick={() => handleMenuToggle(index)}>⋮</button>
-                {menuAtivo === index && (
-                  <div className="acoes-opcoes">
-                    <button onClick={() => handleEditarServico(servico)}>Editar serviço</button>
-                    <button onClick={() => handleRemoverServico(servico)}>Remover serviço</button>
-                    <button onClick={() => handleEditarCategoria(servico)}>Editar categoria</button>
-                    <button onClick={() => handleRemoverCategoria(servico)}>Remover categoria</button>
-                  </div>
-                )}
+              <td data-label="Serviço">{servico.nomeServico}</td>
+              <td data-label="Duração">{servico.duracaoEstimada}m</td>
+              <td data-label="Preço">R$ {servico.preco.toFixed(2)}</td>
+              <td data-label="">
+                <div className="acoes-menu">
+                  <button
+                    className="btn-mais"
+                    onClick={(e) => handleMenuToggle(index, e)}>
+                    ⋮
+                  </button>
+
+                  {menuAtivo === index && (
+                    <div className="acoes-opcoes">
+                      <button onClick={() => handleEditarServico(servico)}>
+                        Editar serviço
+                      </button>
+                      <button onClick={() => handleRemoverServico(servico)}>
+                        Remover serviço
+                      </button>
+                      <button onClick={() => handleEditarCategoria(servico)}>
+                        Editar categoria
+                      </button>
+                      <button onClick={() => handleRemoverCategoria(servico)}>
+                        Remover categoria
+                      </button>
+                    </div>
+                  )}
+                </div>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
 
-      <div className="cadastrados">Serviços cadastrados: {servicos.length}</div>
+      <div className="cadastrados">
+        Serviços cadastrados: {servicos.length}
+      </div>
     </Container>
   );
 }

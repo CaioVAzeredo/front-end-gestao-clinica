@@ -17,7 +17,7 @@ const Container = styled.div`
     background: #fff;
     border-radius: 8px;
     padding: 20px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   }
 
   .kpi {
@@ -68,6 +68,34 @@ const Container = styled.div`
   button:hover {
     background: #00796b;
   }
+
+  /* ---- RESPONSIVIDADE ---- */
+  @media (max-width: 768px) {
+    .grid {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card {
+      padding: 15px;
+    }
+
+    .kpi {
+      flex-direction: column;
+      align-items: flex-start;
+      margin-bottom: 10px;
+    }
+
+    .kpi .value {
+      font-size: 18px;
+    }
+
+    .service-item {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+    }
+  }
 `;
 
 function Relatorios() {
@@ -75,7 +103,6 @@ function Relatorios() {
 
   useEffect(() => {
     const fetchDados = async () => {
-      // Aqui você vai chamar sua API real
       const agendamentos = await fetch(`http://localhost:${REACT_APP_PORT}/api/agendamentos`)
         .then((res) => res.json());
       const clientes = await fetch(`http://localhost:${REACT_APP_PORT}/api/clientes`)
@@ -131,7 +158,6 @@ function Relatorios() {
             ))}
           </div>
         </div>
-
       </div>
     </Container>
   );
