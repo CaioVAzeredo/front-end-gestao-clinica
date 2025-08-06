@@ -165,12 +165,45 @@ function ConfiguracoesConta() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSalvar = () => {
-    axios
-      .put(`http://localhost:${REACT_APP_PORT}/api/funcionarios/2`, form)
-      .then(() => alert("Dados atualizados com sucesso!"))
-      .catch((err) => console.error("Erro ao salvar:", err));
+const handleSalvar = () => {
+  const agora = new Date().toISOString();
+
+  const dadosAtualizados = {
+    nome: form.nome,
+    telefone: form.telefone,
+    email: form.email,
+    cpf: form.cpf,
+    dataNascimento: agora,  // se não houver campo na tela, envia padrão
+    idFuncionario: 2,       // fixo
+    senhaHash: "string",    // valor fixo, ajuste conforme API real
+    perfil: "string",       // ajuste conforme o perfil real do funcionário
+    ativo: true,
+    dataCriacao: agora,
+    ultimaAtualizacao: agora,
+    enderecoId: 0,
+    endereco: {
+      idEndereco: 0,
+      logradouro: form.logradouro,
+      numero: form.numero,
+      complemento: form.complemento,
+      cidade: form.cidade,
+      uf: form.uf,
+      cep: form.cep,
+      dataCriacao: agora,
+      ultimaAtualizacao: agora
+    }
   };
+
+  axios
+    .put(`http://localhost:${REACT_APP_PORT}/api/funcionarios/2`, dadosAtualizados)
+    .then(() => alert("Dados atualizados com sucesso!"))
+    .catch((err) => {
+      console.error("Erro ao salvar:", err.response ? err.response.data : err);
+      alert("Erro ao salvar os dados. Verifique os campos e tente novamente.");
+    });
+};
+
+
 
   const handleLogout = () => {
     alert("Logout realizado!");
