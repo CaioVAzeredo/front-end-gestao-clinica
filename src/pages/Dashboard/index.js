@@ -39,52 +39,49 @@ const Container = styled.div`
     font-size: 14px;
   }
 
-.list {
-  margin-top: 10px;
-  display: flex;
-  gap: 10px;
-  overflow-x: auto;
-  padding-bottom: 10px;
-}
-
-/* estilo do card */
-.list-item {
-  flex: 0 0 auto;
-  min-width: 200px;
-  border: 1px solid #f0f0f0;
-  border-radius: 6px;
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  background: #fafafa;
-  font-size: 14px;
-}
-
-.list-item span:first-child {
-  font-weight: bold;
-}
-
-/* --- ALTERAÇÃO PARA TELAS PEQUENAS --- */
-@media (max-width: 480px) {
   .list {
-    flex-direction: column; /* vira coluna no mobile */
-    overflow-x: hidden; /* remove scroll horizontal no mobile */
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding-bottom: 10px;
   }
 
   .list-item {
-    min-width: 100%; /* ocupa toda a largura */
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-    background: #fff;
+    flex: 0 0 auto;
+    min-width: 200px;
+    border: 1px solid #f0f0f0;
+    border-radius: 6px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    background: #fafafa;
+    font-size: 14px;
   }
-}
 
+  .list-item span:first-child {
+    font-weight: bold;
+  }
+
+  @media (max-width: 480px) {
+    .list {
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    .list-item {
+      min-width: 100%;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+      background: #fff;
+    }
+  }
 
   .actions {
     margin-top: 20px;
     display: flex;
     gap: 10px;
-    flex-wrap: wrap; /* importante no mobile */
+    flex-wrap: wrap;
   }
 
   button {
@@ -94,7 +91,7 @@ const Container = styled.div`
     border: none;
     border-radius: 5px;
     cursor: pointer;
-    flex: 1 1 auto; /* para ocupar largura no mobile */
+    flex: 1 1 auto;
     min-width: 120px;
   }
 
@@ -102,7 +99,7 @@ const Container = styled.div`
     padding: 10px;
 
     .grid {
-      grid-template-columns: 1fr; /* força 1 card por linha */
+      grid-template-columns: 1fr;
       gap: 10px;
     }
 
@@ -123,7 +120,7 @@ const Container = styled.div`
     }
 
     button {
-      width: 100%; /* botões ocupando toda largura */
+      width: 100%;
     }
   }
 `;
@@ -144,9 +141,19 @@ function Dashboard({ setPagina, setTitulo }) {
       const clientes = await fetch(`http://localhost:${REACT_APP_PORT}/api/clientes`).then(res => res.json());
       const servicos = await fetch(`http://localhost:${REACT_APP_PORT}/api/servicos`).then(res => res.json());
 
-      const consultasHoje = agendamentos.data.$values.filter(a => new Date(a.dataHoraInicio).toDateString() === new Date().toDateString()).length;
-      const clientesNovos = clientes.data.$values.filter(c => new Date(c.dataCriacao) >= new Date(new Date().setDate(new Date().getDate() - 7))).length;
-      const taxaOcupacao = "85";
+      const hoje = new Date().toDateString();
+
+      const consultasHoje = agendamentos.data.$values.filter(
+        a => new Date(a.dataHoraInicio).toDateString() === hoje
+      ).length;
+
+      const totalHorariosDisponiveisHoje = 8; 
+      const taxaOcupacao = ((consultasHoje / totalHorariosDisponiveisHoje) * 100).toFixed(1);
+
+      const clientesNovos = clientes.data.$values.filter(
+        c => new Date(c.dataCriacao) >= new Date(new Date().setDate(new Date().getDate() - 7))
+      ).length;
+
       const receitaMes = agendamentos.data.$values.reduce((acc, ag) => acc + (ag.servico?.preco || 0), 0);
 
       setDados({
@@ -215,7 +222,6 @@ function Dashboard({ setPagina, setTitulo }) {
           )}
         </div>
       </div>
-
 
       <div className="actions">
         <button onClick={() => setShowModalConsulta(true)}>Nova Consulta</button>
