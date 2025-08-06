@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
+import ModalCadastrarCliente from "../../components/ModalCadastrarCliente"; // import do modal
+import ModalNovaConsulta from "../../components/ModalNovaConsulta"; // <-- ADICIONADO
 const REACT_APP_PORT = process.env.REACT_APP_PORT;
 
 const Container = styled.div`
@@ -62,8 +64,15 @@ const Container = styled.div`
   }
 `;
 
-function Dashboard() {
+function Dashboard({ setPagina, setTitulo }) {
   const [dados, setDados] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [showModalConsulta, setShowModalConsulta] = useState(false); // <-- ADICIONADO
+
+  function pagRelatorios() {
+    setPagina("relatorios");
+    setTitulo("Relatórios");
+  }
 
   useEffect(() => {
     const fetchDados = async () => {
@@ -73,7 +82,7 @@ function Dashboard() {
 
       const consultasHoje = agendamentos.data.$values.filter(a => new Date(a.dataHoraInicio).toDateString() === new Date().toDateString()).length;
       const clientesNovos = clientes.data.$values.filter(c => new Date(c.dataCriacao) >= new Date(new Date().setDate(new Date().getDate() - 7))).length;
-      const taxaOcupacao = "85"; // calculo real depende da agenda completa
+      const taxaOcupacao = "85";
       const receitaMes = agendamentos.data.$values.reduce((acc, ag) => acc + (ag.servico?.preco || 0), 0);
 
       setDados({
@@ -81,7 +90,7 @@ function Dashboard() {
         clientesNovos,
         taxaOcupacao,
         receitaMes,
-        proximos: agendamentos.data.$values.slice(0, 5)
+        proximos: agendamentos.data.$values.slice(0, 5),
       });
     };
 
@@ -120,7 +129,9 @@ function Dashboard() {
         <div className="list">
           {dados.proximos.map((ag, i) => (
             <div key={i} className="list-item">
-              <span>{new Date(ag.dataHoraInicio).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+              <span>
+                {new Date(ag.dataHoraInicio).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+              </span>
               <span>{ag.cliente?.nome}</span>
               <span>{ag.servico?.nomeServico}</span>
             </div>
@@ -129,10 +140,13 @@ function Dashboard() {
       </div>
 
       <div className="actions">
-        <button>Nova Consulta</button>
-        <button>Cadastrar Cliente</button>
-        <button>Ver Relatórios</button>
+        <button onClick={() => setShowModalConsulta(true)}>Nova Consulta</button> {/* <-- ADICIONADO */}
+        <button onClick={() => setShowModal(true)}>Cadastrar Cliente</button>
+        <button onClick={pagRelatorios}>Ver Relatórios</button>
       </div>
+
+      {showModal && <ModalCadastrarCliente onClose={() => setShowModal(false)} />}
+      {showModalConsulta && <ModalNovaConsulta onClose={() => setShowModalConsulta(false)} />} {/* <-- ADICIONADO */}
     </Container>
   );
 }

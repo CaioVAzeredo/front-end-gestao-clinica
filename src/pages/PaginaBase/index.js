@@ -1,6 +1,6 @@
 import { useState } from "react";
 import styled from "styled-components";
-import { FiMenu, FiHome, FiCalendar, FiUsers, FiActivity, FiBarChart2, FiSettings } from "react-icons/fi";
+import { FiHome, FiCalendar, FiUsers, FiActivity, FiBarChart2, FiSettings } from "react-icons/fi";
 import Header from "../../components/Header";
 import DashBoard from "../Dashboard";
 import Agenda from "../Agenda";
@@ -13,42 +13,59 @@ const Layout = styled.div`
   display: flex;
   height: 100vh;
   font-family: Arial, sans-serif;
+  flex-direction: column;
+`;
 
-  .sidebar {
-    width: ${(props) => (props.collapsed ? "70px" : "240px")};
-    background-color: #ffffff;
-    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-    display: flex;
-    flex-direction: column;
-    transition: width 0.3s ease;
+const Main = styled.div`
+  display: flex;
+  flex: 1;
+  position: relative;
+`;
+
+const Sidebar = styled.aside`
+  width: ${(props) => (props.collapsed ? "70px" : "240px")};
+  background-color: #ffffff;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  transition: width 0.3s ease;
+
+  @media (max-width: 768px) {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    transform: ${(props) => (props.visible ? "translateX(0)" : "translateX(-100%)")};
+    transition: transform 0.3s ease;
+    z-index: 1000;
+    width: 240px;
   }
+`;
 
-  .logo {
-    padding: 20px;
-    text-align: center;
-    border-bottom: 1px solid #f0f0f0;
+const Overlay = styled.div`
+  @media (max-width: 768px) {
+    display: ${(props) => (props.visible ? "block" : "none")};
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.3);
+    z-index: 999;
   }
+`;
 
-  .hamburger {
-    font-size: 24px;
-    cursor: pointer;
-    color: #009688;
-    margin: 15px auto;
-    display: block;
-  }
+const Menu = styled.ul`
+  list-style: none;
+  padding: 20px 0;
+  margin: 0;
+  flex: 1;
+`;
 
-  .menu {
-    list-style: none;
-    padding: 20px 0;
-    margin: 0;
-    flex: 1;
-  }
+const MenuItem = styled.li`
+  margin-bottom: 10px;
 
-  .menu li {
-    margin-bottom: 10px;
-  }
-
-  .menu button {
+  button {
     background: none;
     border: none;
     width: 100%;
@@ -61,33 +78,35 @@ const Layout = styled.div`
     align-items: center;
     gap: 12px;
     transition: background 0.2s;
-  }
 
-  .menu button:hover,
-  .menu button.ativo {
-    background-color: #e6f7f4;
-    color: #009688;
-    font-weight: bold;
-    border-left: 4px solid #009688;
-  }
+    &:hover,
+    &.ativo {
+      background-color: #e6f7f4;
+      color: #009688;
+      font-weight: bold;
+      border-left: 4px solid #009688;
+    }
 
-  .menu button span {
-    display: ${(props) => (props.collapsed ? "none" : "inline")};
-    transition: opacity 0.3s;
+    span {
+      display: ${({ collapsed, mobileOpen }) =>
+        collapsed && !mobileOpen ? "none" : "inline"};
+      transition: opacity 0.3s;
+    }
   }
+`;
 
-  .content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    background-color: #f9f9f9;
-  }
 
-  .page-content {
-    padding: 20px;
-    flex: 1;
-    overflow-y: auto;
-  }
+const Content = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: #f9f9f9;
+`;
+
+const PageContent = styled.div`
+  padding: 20px;
+  flex: 1;
+  overflow-y: auto;
 `;
 
 function PaginaBase() {
@@ -96,6 +115,7 @@ function PaginaBase() {
   const [filtro, setFiltro] = useState("dashboard");
   const [icone, setIcone] = useState("dashboard");
   const [collapsed, setCollapsed] = useState(false);
+  const [showSidebarMobile, setShowSidebarMobile] = useState(false);
 
   const paginas = {
     dashboard: <DashBoard setPagina={setPagina} setTitulo={setTitulo} />,
@@ -115,46 +135,62 @@ function PaginaBase() {
     { key: "configuracoes", label: "Configurações", icon: <FiSettings /> },
   ];
 
+  const handleToggleSidebar = () => {
+    if (window.innerWidth <= 768) {
+      setShowSidebarMobile(!showSidebarMobile);
+    } else {
+      setCollapsed(!collapsed);
+    }
+  };
+
+  const handleChangePage = (item) => {
+    setPagina(item.key);
+    setTitulo(item.label);
+    setFiltro(item.key);
+    setIcone(item.key);
+    setShowSidebarMobile(false); // fecha menu no mobile
+  };
+
   return (
-    <Layout collapsed={collapsed}>
-      <aside className="sidebar">
-        <div className="logo">
-          <FiMenu className="hamburger" onClick={() => setCollapsed(!collapsed)} />
-        </div>
+    <Layout>
+      <Header
+        titulo={titulo}
+        setPagina={setPagina}
+        setTitulo={setTitulo}
+        setFiltro={setFiltro}
+        setIcone={setIcone}
+        toggleSidebar={handleToggleSidebar}
+      />
 
-        <ul className="menu">
-          {menuItems.map((item) => (
-            <li key={item.key}>
-              <button
-                className={pagina === item.key ? "ativo" : ""}
-                onClick={() => {
-                  setPagina(item.key);
-                  setTitulo(item.label);
-                  setFiltro(item.key);
-                  setIcone(item.key);
-                }}
-              >
-                {item.icon}
-                <span>{item.label}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      </aside>
+      <Main>
+        <Overlay visible={showSidebarMobile} onClick={() => setShowSidebarMobile(false)} />
+        <Sidebar collapsed={collapsed} visible={showSidebarMobile}>
+          <Menu>
+            {menuItems.map((item) => (
+              <MenuItem
+  key={item.key}
+  collapsed={collapsed}
+  mobileOpen={showSidebarMobile} // novo
+>
+  <button
+    className={pagina === item.key ? "ativo" : ""}
+    onClick={() => handleChangePage(item)}
+  >
+    {item.icon}
+    <span>{item.label}</span>
+  </button>
+</MenuItem>
 
-      <div className="content">
-        <Header
-          titulo={titulo}
-          setPagina={setPagina}
-          setTitulo={setTitulo}
-          setFiltro={setFiltro}
-          setIcone={setIcone}
-        />
-        <div className="page-content">{paginas[pagina]}</div>
-      </div>
+            ))}
+          </Menu>
+        </Sidebar>
+
+        <Content>
+          <PageContent>{paginas[pagina]}</PageContent>
+        </Content>
+      </Main>
     </Layout>
   );
 }
-
 
 export default PaginaBase;

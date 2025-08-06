@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import axios from 'axios';
+import { FiSidebar } from "react-icons/fi";
 
 const HeaderContainer = styled.div`
   display: flex;
@@ -9,6 +10,18 @@ const HeaderContainer = styled.div`
   padding: 13px;
   background: #fff;
   border-bottom: 1px solid #eee;
+`;
+
+const TitleSection = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 15px;
+
+  .menu-toggle {
+    cursor: pointer;
+    font-size: 24px;
+    color: #009688;
+  }
 `;
 
 const Title = styled.h2`
@@ -49,6 +62,9 @@ const Avatar = styled.div`
 const UserDetails = styled.div`
   display: flex;
   flex-direction: column;
+  @media (max-width: 768px) {
+  display: none;
+  }
 `;
 
 const UserName = styled.span`
@@ -61,7 +77,7 @@ const UserStatus = styled.span`
   color: ${props => (props.online ? 'green' : 'red')};
 `;
 
-function Header({ titulo, setPagina, setTitulo, setFiltro, setIcone }) {
+function Header({ titulo, setPagina, setTitulo, setFiltro, setIcone, toggleSidebar }) {
   const [usuario, setUsuario] = useState(null);
 
   useEffect(() => {
@@ -93,7 +109,11 @@ function Header({ titulo, setPagina, setTitulo, setFiltro, setIcone }) {
 
   return (
     <HeaderContainer>
-      <Title>Gerenciador de {titulo}</Title>
+      <TitleSection>
+        <FiSidebar className="menu-toggle" onClick={toggleSidebar} />
+        <Title>Gerenciador de {titulo}</Title>
+      </TitleSection>
+
       <HeaderRight>
         {usuario && (
           <UserInfo onClick={irConfiguracoes}>
