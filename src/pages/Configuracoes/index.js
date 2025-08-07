@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import styled from "styled-components";
+import { useNavigate } from "react-router-dom";
 const REACT_APP_PORT = process.env.REACT_APP_PORT;
 
 const Container = styled.div`
@@ -136,6 +137,10 @@ function ConfiguracoesConta() {
 
   const [usuario, setUsuario] = useState("");
 
+  const navigate = useNavigate();
+
+
+
   useEffect(() => {
     axios
       .get(`http://localhost:${REACT_APP_PORT}/api/funcionarios`)
@@ -205,12 +210,10 @@ const handleSalvar = () => {
 
 
 
-  const handleLogout = () => {
-    alert("Logout realizado!");
-    // Aqui você pode limpar tokens e redirecionar, ex:
-    // localStorage.removeItem("token");
-    // window.location.href = "/login";
-  };
+const handleLogout = () => {
+  localStorage.removeItem("authToken"); // remove o token
+  navigate("/login"); // redireciona para a tela de login
+};
 
   return (
     <Container>

@@ -1,23 +1,51 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import './App.css';
 import PaginaBase from "./pages/PaginaBase";
+import Login from "./pages/Login";
+import Registro from "./pages/Registro";
+import { useEffect, useState } from "react";
+
+function PrivateRoute({ token, children }) {
+  return token ? children : <Navigate to="/login" replace />;
+}
 
 function App() {
+  const [token, setToken] = useState(null);
+
+  useEffect(() => {
+    const tokenSalvo = localStorage.getItem("authToken");
+    if (tokenSalvo) {
+      setToken(tokenSalvo);
+    }
+  }, []);
+
   return (
-    
+    <div className="App">
       <Router>
-        <div className="App">
-          <Routes>
-
-            <Route path="/" element={<Navigate to="/pag-base" replace />} />
-
-            <Route path="/pag-base" element={<PaginaBase />} />
-
-            <Route path="*" element={<Navigate to="/pag-base" replace />} />
-          </Routes>
-        </div>
+        <Routes>
+          <Route path="/registro" element={<Registro />} />
+          <Route path="/login" element={<Login setToken={setToken} />} />
+          <Route
+            path="/pag-base"
+            element={
+              <PrivateRoute token={token}>
+                <PaginaBase />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/"
+            element={
+              !token ? (
+                <Login setToken={setToken} />
+              ) : (
+                <Navigate to="/pag-base" replace />
+              )
+            }
+          />
+        </Routes>
       </Router>
-    
+    </div>
   );
 }
 
