@@ -97,31 +97,44 @@ function Login({ setToken }) {
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
-        e.preventDefault();
+    e.preventDefault();
 
-        try {
-            const response = await fetch("http://localhost:5239/api/Auth/login", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    usuario: email,
-                    senha: senha
-                }),
-            });
+    try {
+        const response = await fetch("http://localhost:5239/api/Auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                usuario: email,
+                senha: senha
+            }),
+        });
 
-            if (response.ok) {
-                const data = await response.json();
-                localStorage.setItem("authToken", data.token);
-                setToken(data.token);
-                navigate("/pag-base");
-            } else {
-                alert("Usuário ou senha inválidos.");
-            }
-        } catch (error) {
-            console.error("Erro ao fazer login:", error);
-            alert("Erro de conexão com o servidor.");
+        if (response.ok) {
+            const data = await response.json();
+
+            // ✅ Mostra tudo no console
+            console.log("Resposta da API:", data);
+
+            // ✅ Salva tudo no localStorage
+            localStorage.setItem("authToken", data.token);
+            localStorage.setItem("funcionarioId", data.funcionarioId);
+            localStorage.setItem("nome", data.nome);
+            localStorage.setItem("perfil", data.perfil);
+
+            // ✅ Atualiza token global (caso esteja usando)
+            setToken(data.token);
+
+            // ✅ Redireciona
+            navigate("/pag-base");
+        } else {
+            alert("Usuário ou senha inválidos.");
         }
-    };
+    } catch (error) {
+        console.error("Erro ao fazer login:", error);
+        alert("Erro de conexão com o servidor.");
+    }
+};
+
 
     const handleContato = () => {
         navigate("/registro");
