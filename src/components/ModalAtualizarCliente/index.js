@@ -106,6 +106,7 @@ function ModalAtualizarCliente({ onClose, cliente: clienteProp, onSalvou }) {
       }
     }
   );
+  const [salvando, setSalvando] = useState(false);
 
   useEffect(() => {
     if (clienteProp) {
@@ -131,16 +132,20 @@ function ModalAtualizarCliente({ onClose, cliente: clienteProp, onSalvou }) {
 
   async function atualizarCliente(e) {
     e.preventDefault();
+    setSalvando(true);
     try {
       const id = cliente.idCliente;
       if (!id) {
         alert("ID do cliente não informado.");
         return;
       }
+      // Cria uma cópia sem idCliente para evitar alteração no backend
+      const { idCliente, ...dadosAtualizacao } = cliente;
+
       const resp = await fetch(`http://localhost:${REACT_APP_PORT}/api/clientes/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(cliente)
+        body: JSON.stringify(dadosAtualizacao) // Envia sem idCliente
       });
       if (!resp.ok) {
         const txt = await resp.text().catch(() => "");
@@ -150,8 +155,9 @@ function ModalAtualizarCliente({ onClose, cliente: clienteProp, onSalvou }) {
       if (onSalvou) onSalvou();
       onClose();
     } catch (error) {
-      console.error("Erro ao atualizar cliente", error);
-      alert("Erro ao atualizar cliente!");
+      alert(`Erro ao atualizar cliente: ${error.message}`);
+    } finally {
+      setSalvando(false);
     }
   }
 
@@ -166,7 +172,7 @@ function ModalAtualizarCliente({ onClose, cliente: clienteProp, onSalvou }) {
   return (
     <ModalOverlay onClick={onClose}>
       <ModalContent onClick={(e) => e.stopPropagation()}>
-        <button type="button" className="close-button" onClick={onClose}>
+        <button type="button" className="close-button" onClick={onClose} disabled={salvando}>
           ×
         </button>
         <h2>Atualizar Cliente</h2>
@@ -176,12 +182,14 @@ function ModalAtualizarCliente({ onClose, cliente: clienteProp, onSalvou }) {
           <input
             value={cliente.nome}
             onChange={(e) => setCliente({ ...cliente, nome: e.target.value })}
+            disabled={salvando}
           />
 
           <label>Telefone</label>
           <input
             value={cliente.telefone}
             onChange={(e) => setCliente({ ...cliente, telefone: e.target.value })}
+            disabled={salvando}
           />
 
           <label>E-mail</label>
@@ -189,12 +197,14 @@ function ModalAtualizarCliente({ onClose, cliente: clienteProp, onSalvou }) {
             type="email"
             value={cliente.email}
             onChange={(e) => setCliente({ ...cliente, email: e.target.value })}
+            disabled={salvando}
           />
 
           <label>CPF</label>
           <input
             value={cliente.cpf}
             onChange={(e) => setCliente({ ...cliente, cpf: e.target.value })}
+            disabled={salvando}
           />
 
           <label>Observações</label>
@@ -202,12 +212,14 @@ function ModalAtualizarCliente({ onClose, cliente: clienteProp, onSalvou }) {
             rows="3"
             value={cliente.observacoes}
             onChange={(e) => setCliente({ ...cliente, observacoes: e.target.value })}
+            disabled={salvando}
           />
 
           <label>Status</label>
           <select
             value={String(cliente.ativo)}
             onChange={(e) => setCliente({ ...cliente, ativo: e.target.value === "true" })}
+            disabled={salvando}
           >
             <option value="true">Ativo</option>
             <option value="false">Inativo</option>
@@ -219,43 +231,51 @@ function ModalAtualizarCliente({ onClose, cliente: clienteProp, onSalvou }) {
             name="logradouro"
             value={cliente.endereco.logradouro}
             onChange={handleEnderecoChange}
+            disabled={salvando}
           />
           <label>Número</label>
           <input
             name="numero"
             value={cliente.endereco.numero}
             onChange={handleEnderecoChange}
+            disabled={salvando}
           />
           <label>Complemento</label>
           <input
             name="complemento"
             value={cliente.endereco.complemento}
             onChange={handleEnderecoChange}
+            disabled={salvando}
           />
           <label>Cidade</label>
           <input
             name="cidade"
             value={cliente.endereco.cidade}
             onChange={handleEnderecoChange}
+            disabled={salvando}
           />
           <label>UF</label>
           <input
             name="uf"
             value={cliente.endereco.uf}
             onChange={handleEnderecoChange}
+            disabled={salvando}
           />
           <label>CEP</label>
           <input
             name="cep"
             value={cliente.endereco.cep}
             onChange={handleEnderecoChange}
+            disabled={salvando}
           />
 
           <div className="modal-actions">
-            <button type="button" className="cancelar" onClick={onClose}>
+            <button type="button" className="cancelar" onClick={onClose} disabled={salvando}>
               Cancelar
             </button>
-            <button type="submit">Atualizar</button>
+            <button type="submit" disabled={salvando}>
+              {salvando ? "Atualizando..." : "Atualizar"}
+            </button>
           </div>
         </form>
       </ModalContent>
