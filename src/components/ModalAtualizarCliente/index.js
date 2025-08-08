@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 const REACT_APP_PORT = process.env.REACT_APP_PORT;
 
@@ -86,31 +86,59 @@ const ModalContent = styled.div`
   }
 `;
 
-function ModalCadastrarCliente({ onClose, onSalvou }) {
-  const [cliente, setCliente] = useState({
-    nome: "",
-    telefone: "",
-    email: "",
-    cpf: "",
-    observacoes: "",
-    ativo: true,
-    endereco: {
-      logradouro: "",
-      numero: "",
-      complemento: "",
-      cidade: "",
-      uf: "",
-      cep: ""
+function ModalAtualizarCliente({ onClose, cliente: clienteProp, onSalvou }) {
+  const [cliente, setCliente] = useState(
+    clienteProp || {
+      idCliente: null,
+      nome: "",
+      telefone: "",
+      email: "",
+      cpf: "",
+      observacoes: "",
+      ativo: true,
+      endereco: {
+        logradouro: "",
+        numero: "",
+        complemento: "",
+        cidade: "",
+        uf: "",
+        cep: ""
+      }
     }
-  });
-  const [salvando, setSalvando] = useState(false);
+  );
 
-  async function salvarCliente(e) {
+  useEffect(() => {
+    if (clienteProp) {
+      setCliente({
+        idCliente: clienteProp.idCliente ?? null,
+        nome: clienteProp.nome ?? "",
+        telefone: clienteProp.telefone ?? "",
+        email: clienteProp.email ?? "",
+        cpf: clienteProp.cpf ?? "",
+        observacoes: clienteProp.observacoes ?? "",
+        ativo: typeof clienteProp.ativo === "boolean" ? clienteProp.ativo : true,
+        endereco: {
+          logradouro: clienteProp.endereco?.logradouro ?? "",
+          numero: clienteProp.endereco?.numero ?? "",
+          complemento: clienteProp.endereco?.complemento ?? "",
+          cidade: clienteProp.endereco?.cidade ?? "",
+          uf: clienteProp.endereco?.uf ?? "",
+          cep: clienteProp.endereco?.cep ?? ""
+        }
+      });
+    }
+  }, [clienteProp]);
+
+  async function atualizarCliente(e) {
     e.preventDefault();
-    setSalvando(true);
     try {
-      const resp = await fetch(`http://localhost:${REACT_APP_PORT}/api/clientes`, {
-        method: "POST",
+      const id = cliente.idCliente;
+      if (!id) {
+        alert("ID do cliente não informado.");
+        return;
+      }
+      const resp = await fetch(`http://localhost:${REACT_APP_PORT}/api/clientes/${id}`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(cliente)
       });
@@ -118,14 +146,12 @@ function ModalCadastrarCliente({ onClose, onSalvou }) {
         const txt = await resp.text().catch(() => "");
         throw new Error(txt || `Erro HTTP ${resp.status}`);
       }
-      alert("Cliente cadastrado com sucesso!");
-      if (typeof onSalvou === "function") onSalvou();
+      alert("Cliente atualizado com sucesso!");
+      if (onSalvou) onSalvou();
       onClose();
     } catch (error) {
-      console.error("Erro ao cadastrar cliente", error);
-      alert("Erro ao cadastrar cliente!");
-    } finally {
-      setSalvando(false);
+      console.error("Erro ao atualizar cliente", error);
+      alert("Erro ao atualizar cliente!");
     }
   }
 
@@ -143,9 +169,9 @@ function ModalCadastrarCliente({ onClose, onSalvou }) {
         <button type="button" className="close-button" onClick={onClose}>
           ×
         </button>
-        <h2>Cadastrar Cliente</h2>
+        <h2>Atualizar Cliente</h2>
 
-        <form onSubmit={salvarCliente}>
+        <form onSubmit={atualizarCliente}>
           <label>Nome</label>
           <input
             value={cliente.nome}
@@ -160,6 +186,7 @@ function ModalCadastrarCliente({ onClose, onSalvou }) {
 
           <label>E-mail</label>
           <input
+            type="email"
             value={cliente.email}
             onChange={(e) => setCliente({ ...cliente, email: e.target.value })}
           />
@@ -225,12 +252,10 @@ function ModalCadastrarCliente({ onClose, onSalvou }) {
           />
 
           <div className="modal-actions">
-            <button type="button" className="cancelar" onClick={onClose} disabled={salvando}>
+            <button type="button" className="cancelar" onClick={onClose}>
               Cancelar
             </button>
-            <button type="submit" disabled={salvando}>
-              {salvando ? "Salvando..." : "Salvar"}
-            </button>
+            <button type="submit">Atualizar</button>
           </div>
         </form>
       </ModalContent>
@@ -238,4 +263,4 @@ function ModalCadastrarCliente({ onClose, onSalvou }) {
   );
 }
 
-export default ModalCadastrarCliente;
+export default ModalAtualizarCliente;

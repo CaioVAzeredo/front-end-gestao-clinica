@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import styled from "styled-components";
+import ModalCadastrarCliente from "../../components/ModalCadastrarCliente";
+import ModalAtualizarCliente from "../../components/ModalAtualizarCliente";
 const REACT_APP_PORT = process.env.REACT_APP_PORT;
 
 const Container = styled.div`
@@ -82,62 +84,63 @@ const Container = styled.div`
   }
 
   @media (max-width: 768px) {
-  table {
-    border: 0;
+    table {
+      border: 0;
+    }
+
+    table thead {
+      display: none;
+    }
+
+    table tbody tr {
+      display: block;
+      margin-bottom: 15px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      padding: 10px;
+    }
+
+    table tbody td {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 5px;
+      font-size: 14px;
+      border: none;
+      word-break: break-word;
+    }
+
+    table tbody td::before {
+      content: attr(data-label);
+      font-weight: bold;
+      flex: 1;
+      text-align: left;
+    }
+
+    table tbody td[data-label="Ações"] {
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    table tbody td[data-label="Ações"] button {
+      width: 100%;
+    }
   }
-
-  table thead {
-    display: none;
-  }
-
-  table tbody tr {
-    display: block;
-    margin-bottom: 15px;
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    padding: 10px;
-  }
-
-  table tbody td {
-    display: flex;
-    justify-content: space-between;
-    padding: 8px 5px;
-    font-size: 14px;
-    border: none;
-    word-break: break-word; /* evita estouro de texto */
-  }
-
-  table tbody td::before {
-    content: attr(data-label);
-    font-weight: bold;
-    flex: 1;
-    text-align: left;
-  }
-
-  /* Botões ocupando a linha inteira */
-  table tbody td[data-label="Ações"] {
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  table tbody td[data-label="Ações"] button {
-    width: 100%;
-  }
-}
-
-
 `;
 
 function Clientes() {
   const [clientes, setClientes] = useState([]);
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [showModalCadastrar, setShowModalCadastrar] = useState(false);
+  const [showModalAtualizar, setShowModalAtualizar] = useState(false);
+  const [clienteEditando, setClienteEditando] = useState(null);
+  const [excluindo, setExcluindo] = useState(false);
 
   const fetchClientes = async () => {
     try {
       const response = await axios.get(`http://localhost:${REACT_APP_PORT}/api/clientes`);
-      setClientes(response.data.data.$values);
+      setClientes(response.data.data?.$values || response.data || []);
     } catch (error) {
       console.error("Erro ao buscar clientes:", error);
     }
@@ -147,15 +150,30 @@ function Clientes() {
     fetchClientes();
   }, []);
 
-  const handleNovo = () => alert("Abrir modal para criar novo cliente");
-  const handleEditar = (cliente) => alert(`Editar cliente: ${cliente.nome}`);
+  const handleNovo = () => setShowModalCadastrar(true);
+
+  const handleEditar = (cliente) => {
+    setClienteEditando(cliente);
+    setShowModalAtualizar(true);
+  };
+
   const handleExcluir = async (id) => {
-    if (window.confirm("Tem certeza que deseja excluir?")) {
+    if (window.confirm("Tem certeza que deseja excluir este cliente?")) {
+      setExcluindo(true);
       try {
         await axios.delete(`http://localhost:${REACT_APP_PORT}/api/clientes/${id}`);
-        fetchClientes();
+        // Recarrega a lista
+        await fetchClientes();
+        // Ajusta a página se necessário (ex.: se a página atual ficar vazia)
+        const totalPagesAtualizado = Math.ceil((clientes.length - 1) / rowsPerPage);
+        if (page > totalPagesAtualizado) {
+          setPage(Math.max(1, totalPagesAtualizado));
+        }
       } catch (error) {
         console.error("Erro ao excluir cliente:", error);
+        alert("Erro ao excluir cliente. Verifique se o ID existe ou tente novamente.");
+      } finally {
+        setExcluindo(false);
       }
     }
   };
@@ -172,22 +190,38 @@ function Clientes() {
             + Novo Cliente
           </button>
         </div>
+
         <div className="paginacao">
           <span>
             {startIndex + 1}-{Math.min(startIndex + rowsPerPage, clientes.length)} de {clientes.length}
           </span>
-          <select value={rowsPerPage} onChange={(e) => { setRowsPerPage(Number(e.target.value)); setPage(1); }}>
+          <select
+            value={rowsPerPage}
+            onChange={(e) => {
+              setRowsPerPage(Number(e.target.value));
+              setPage(1);
+            }}
+          >
             {[5, 10, 25, 50].map((size) => (
               <option key={size} value={size}>
                 {size}
               </option>
             ))}
           </select>
-          <button disabled={page === 1} onClick={() => setPage(1)}>{"<<"}</button>
-          <button disabled={page === 1} onClick={() => setPage((p) => p - 1)}>{"<"}</button>
-          <button disabled={page === totalPages} onClick={() => setPage((p) => p + 1)}>{">"}</button>
-          <button disabled={page === totalPages} onClick={() => setPage(totalPages)}>{">>"}</button>
+          <button disabled={page === 1 || excluindo} onClick={() => setPage(1)}>
+            {"<<"}
+          </button>
+          <button disabled={page === 1 || excluindo} onClick={() => setPage((p) => p - 1)}>
+            {"<"}
+          </button>
+          <button disabled={page === totalPages || excluindo} onClick={() => setPage((p) => p + 1)}>
+            {">"}
+          </button>
+          <button disabled={page === totalPages || excluindo} onClick={() => setPage(totalPages)}>
+            {">>"}
+          </button>
         </div>
+
         <table>
           <thead>
             <tr>
@@ -208,32 +242,43 @@ function Clientes() {
                 </td>
                 <td data-label="Status">{cliente.ativo ? "Ativo" : "Inativo"}</td>
                 <td data-label="Ações">
-                  <button className="btn btn-editar" onClick={() => handleEditar(cliente)}>Atualizar</button>
-                  <button className="btn btn-excluir" onClick={() => handleExcluir(cliente.idCliente)}>Excluir</button>
+                  <button
+                    type="button"
+                    className="btn btn-editar"
+                    onClick={() => handleEditar(cliente)}
+                    disabled={excluindo}
+                  >
+                    Atualizar
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-excluir"
+                    onClick={() => handleExcluir(cliente.idCliente)}
+                    disabled={excluindo}
+                  >
+                    {excluindo ? "Excluindo..." : "Excluir"}
+                  </button>
                 </td>
               </tr>
             ))}
           </tbody>
-
         </table>
-
-        <div className="paginacao">
-          <span>
-            {startIndex + 1}-{Math.min(startIndex + rowsPerPage, clientes.length)} de {clientes.length}
-          </span>
-          <select value={rowsPerPage} onChange={(e) => { setRowsPerPage(Number(e.target.value)); setPage(1); }}>
-            {[5, 10, 25, 50].map((size) => (
-              <option key={size} value={size}>
-                {size}
-              </option>
-            ))}
-          </select>
-          <button disabled={page === 1} onClick={() => setPage(1)}>{"<<"}</button>
-          <button disabled={page === 1} onClick={() => setPage((p) => p - 1)}>{"<"}</button>
-          <button disabled={page === totalPages} onClick={() => setPage((p) => p + 1)}>{">"}</button>
-          <button disabled={page === totalPages} onClick={() => setPage(totalPages)}>{">>"}</button>
-        </div>
       </div>
+
+      {showModalCadastrar && (
+        <ModalCadastrarCliente onClose={() => setShowModalCadastrar(false)} onSalvou={fetchClientes} />
+      )}
+
+      {showModalAtualizar && (
+        <ModalAtualizarCliente
+          cliente={clienteEditando}
+          onClose={() => {
+            setShowModalAtualizar(false);
+            setClienteEditando(null);
+          }}
+          onSalvou={fetchClientes}
+        />
+      )}
     </Container>
   );
 }
