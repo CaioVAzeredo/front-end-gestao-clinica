@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import styled from "styled-components";
 import {
   FiHome,
@@ -98,7 +98,7 @@ const MenuItem = styled.li`
 
     span {
       display: ${({ collapsed, mobileOpen }) =>
-        collapsed && !mobileOpen ? "none" : "inline"};
+    collapsed && !mobileOpen ? "none" : "inline"};
       transition: opacity 0.3s;
     }
   }
@@ -122,8 +122,18 @@ function PaginaBase() {
   const [titulo, setTitulo] = useState("Dashboard");
   const [filtro, setFiltro] = useState("dashboard");
   const [icone, setIcone] = useState("dashboard");
+  const perfil = localStorage.getItem("perfil");
   const [collapsed, setCollapsed] = useState(false);
   const [showSidebarMobile, setShowSidebarMobile] = useState(false);
+  const [token, setToken] = useState(null);
+
+useEffect(() => {
+  const tokenSalvo = localStorage.getItem("authToken");
+  if (tokenSalvo) {
+    setToken(tokenSalvo);
+  }
+}, []);
+
 
   const paginas = {
     dashboard: <DashBoard setPagina={setPagina} setTitulo={setTitulo} />,
@@ -135,15 +145,19 @@ function PaginaBase() {
     configuracoes: <Configuracoes />,
   };
 
+
   const menuItems = [
     { key: "dashboard", label: "Dashboard", icon: <FiHome /> },
     { key: "agenda", label: "Agenda", icon: <FiCalendar /> },
     { key: "clientes", label: "Clientes", icon: <FiUsers /> },
-    { key: "Funcionarios", label: "Funcionários", icon: <FiBriefcase /> }, // ✅ novo item
+    ...(perfil === "admin"
+      ? [{ key: "Funcionarios", label: "Funcionários", icon: <FiBriefcase /> }]
+      : []),
     { key: "servicos", label: "Serviços", icon: <FiActivity /> },
     { key: "relatorios", label: "Relatórios", icon: <FiBarChart2 /> },
     { key: "configuracoes", label: "Configurações", icon: <FiSettings /> },
   ];
+
 
   const handleToggleSidebar = () => {
     if (window.innerWidth <= 768) {

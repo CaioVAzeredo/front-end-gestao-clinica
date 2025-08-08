@@ -141,6 +141,32 @@ function Funcionarios() {
     }
   };
 
+  const handleTogglePerfil = async (func) => {
+    const novoPerfil = func.perfil === "admin" ? "funcionario" : "admin";
+    const funcionarioAtualizado = { ...func, perfil: novoPerfil };
+
+    try {
+      await axios.put(`http://localhost:${REACT_APP_PORT}/api/funcionarios/${func.idFuncionario}`, funcionarioAtualizado);
+      fetchFuncionarios();
+    } catch (error) {
+      console.error("Erro ao atualizar perfil do funcionário:", error);
+      alert("Erro ao mudar o perfil.");
+    }
+  };
+
+  const handleToggleStatus = async (func) => {
+    const novoStatus = !func.ativo;
+    const funcionarioAtualizado = { ...func, ativo: novoStatus };
+
+    try {
+      await axios.put(`http://localhost:${REACT_APP_PORT}/api/funcionarios/${func.idFuncionario}`, funcionarioAtualizado);
+      fetchFuncionarios();
+    } catch (error) {
+      console.error("Erro ao atualizar status do funcionário:", error);
+      alert("Erro ao atualizar o status.");
+    }
+  };
+
   useEffect(() => {
     fetchFuncionarios();
   }, []);
@@ -151,12 +177,14 @@ function Funcionarios() {
     if (window.confirm("Tem certeza que deseja excluir?")) {
       try {
         await axios.delete(`http://localhost:${REACT_APP_PORT}/api/funcionarios/${id}`);
-        fetchFuncionarios();
+        fetchFuncionarios(); 
       } catch (error) {
         console.error("Erro ao excluir funcionário:", error);
+        alert("Erro ao excluir funcionário.");
       }
     }
   };
+
 
   const startIndex = (page - 1) * rowsPerPage;
   const paginated = funcionarios.slice(startIndex, startIndex + rowsPerPage);
@@ -211,12 +239,25 @@ function Funcionarios() {
                 <td data-label="Ações">
                   <button className="btn btn-editar" onClick={() => handleEditar(func)}>Atualizar</button>
                   <button className="btn btn-excluir" onClick={() => handleExcluir(func.idFuncionario)}>Excluir</button>
+                  <button
+                    className="btn"
+                    style={{ backgroundColor: func.ativo ? "#6c757d" : "#28a745", color: "#fff", marginTop: "6px" }}
+                    onClick={() => handleToggleStatus(func)}
+                  >
+                    {func.ativo ? "Inativar" : "Ativar"}
+                  </button>
+                  <button
+                    className="btn"
+                    style={{ backgroundColor: "#007bff", color: "#fff", marginTop: "6px" }}
+                    onClick={() => handleTogglePerfil(func)}
+                  >
+                    Mudar Perfil
+                  </button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
-
         <div className="paginacao">
           <span>
             {startIndex + 1}-{Math.min(startIndex + rowsPerPage, funcionarios.length)} de {funcionarios.length}

@@ -127,6 +127,7 @@ function ConfiguracoesConta() {
     telefone: "",
     email: "",
     cpf: "",
+    senha: "",
     logradouro: "",
     numero: "",
     complemento: "",
@@ -135,56 +136,59 @@ function ConfiguracoesConta() {
     cep: ""
   });
 
+
   const [usuario, setUsuario] = useState("");
   const navigate = useNavigate();
   const funcionarioId = localStorage.getItem("funcionarioId");
   const token = localStorage.getItem("authToken");
 
   useEffect(() => {
-  const token = localStorage.getItem("authToken");
-  const funcionarioId = localStorage.getItem("funcionarioId");
+    const token = localStorage.getItem("authToken");
+    const funcionarioId = localStorage.getItem("funcionarioId");
 
-  if (!token || !funcionarioId) {
-    alert("Você precisa estar logado.");
-    navigate("/login");
-    return;
-  }
-
-  const buscarDadosFuncionario = async () => {
-    try {
-      const response = await fetch(`http://localhost:${REACT_APP_PORT}/api/funcionarios/${funcionarioId}`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setUsuario(data.nome); // para mostrar "Olá, Fulano"
-        setForm({
-          nome: data.nome || "",
-          telefone: data.telefone || "",
-          email: data.email || "",
-          cpf: data.cpf || "",
-          logradouro: data.endereco?.logradouro || "",
-          numero: data.endereco?.numero || "",
-          complemento: data.endereco?.complemento || "",
-          cidade: data.endereco?.cidade || "",
-          uf: data.endereco?.uf || "",
-          cep: data.endereco?.cep || ""
-        });
-      } else {
-        console.error("Erro ao buscar funcionário:", data.message);
-      }
-    } catch (error) {
-      console.error("Erro na requisição:", error);
+    if (!token || !funcionarioId) {
+      alert("Você precisa estar logado.");
+      navigate("/login");
+      return;
     }
-  };
 
-  buscarDadosFuncionario();
-}, []);
+    const buscarDadosFuncionario = async () => {
+      try {
+        const response = await fetch(`http://localhost:${REACT_APP_PORT}/api/funcionarios/${funcionarioId}`, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          setUsuario(data.nome); // para mostrar "Olá, Fulano"
+          setForm({
+  nome: data.nome || "",
+  telefone: data.telefone || "",
+  email: data.email || "",
+  cpf: data.cpf || "",
+  senha: data.senhaHash || "", 
+  logradouro: data.endereco?.logradouro || "",
+  numero: data.endereco?.numero || "",
+  complemento: data.endereco?.complemento || "",
+  cidade: data.endereco?.cidade || "",
+  uf: data.endereco?.uf || "",
+  cep: data.endereco?.cep || ""
+});
+
+        } else {
+          console.error("Erro ao buscar funcionário:", data.message);
+        }
+      } catch (error) {
+        console.error("Erro na requisição:", error);
+      }
+    };
+
+    buscarDadosFuncionario();
+  }, []);
 
 
   const handleChange = (e) => {
@@ -195,30 +199,37 @@ function ConfiguracoesConta() {
     const agora = new Date().toISOString();
 
     const dadosAtualizados = {
-      idFuncionario: parseInt(funcionarioId),
-      nome: form.nome,
-      telefone: form.telefone,
-      email: form.email,
-      cpf: form.cpf,
-      dataNascimento: agora,
-      senhaHash: "string",
-      perfil: localStorage.getItem("perfil") || "funcionario",
-      ativo: true,
-      dataCriacao: agora,
-      ultimaAtualizacao: agora,
-      enderecoId: 0,
-      endereco: {
-        idEndereco: 0,
-        logradouro: form.logradouro,
-        numero: form.numero,
-        complemento: form.complemento,
-        cidade: form.cidade,
-        uf: form.uf,
-        cep: form.cep,
-        dataCriacao: agora,
-        ultimaAtualizacao: agora
-      }
-    };
+  idFuncionario: parseInt(funcionarioId),
+  nome: form.nome,
+  telefone: form.telefone,
+  email: form.email,
+  cpf: form.cpf,
+  senhaHash: form.senha, // 👈 agora envia sempre
+  dataNascimento: agora,
+  perfil: localStorage.getItem("perfil") || "funcionario",
+  ativo: true,
+  dataCriacao: agora,
+  ultimaAtualizacao: agora,
+  enderecoId: 0,
+  endereco: {
+    idEndereco: 0,
+    logradouro: form.logradouro,
+    numero: form.numero,
+    complemento: form.complemento,
+    cidade: form.cidade,
+    uf: form.uf,
+    cep: form.cep,
+    dataCriacao: agora,
+    ultimaAtualizacao: agora
+  }
+};
+
+
+    if (form.senha.trim() !== "") {
+      dadosAtualizados.senhaHash = form.senha;
+    }
+
+
 
     axios
       .put(`http://localhost:${REACT_APP_PORT}/api/funcionarios/${funcionarioId}`, dadosAtualizados, {
@@ -297,7 +308,20 @@ function ConfiguracoesConta() {
             <input name="cep" value={form.cep} onChange={handleChange} />
           </div>
         </div>
+  <div className="col">
+    <label>Senha</label>
+    <input
+      name="senha"
+      type="text"
+      value={form.senha}
+      onChange={handleChange}
+    />
+  </div>
       </div>
+      <div className="linha">
+</div>
+
+
 
       <button className="btn-salvar" onClick={handleSalvar}>
         Salvar Alterações

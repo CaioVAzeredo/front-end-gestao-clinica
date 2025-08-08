@@ -3,21 +3,14 @@ import './App.css';
 import PaginaBase from "./pages/PaginaBase";
 import Login from "./pages/Login";
 import Registro from "./pages/Registro";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 function PrivateRoute({ token, children }) {
   return token ? children : <Navigate to="/login" replace />;
 }
 
 function App() {
-  const [token, setToken] = useState(null);
-
-  useEffect(() => {
-    const tokenSalvo = localStorage.getItem("authToken");
-    if (tokenSalvo) {
-      setToken(tokenSalvo);
-    }
-  }, []);
+  const [token, setToken] = useState(() => localStorage.getItem("authToken")); // ✅ Corrigido
 
   return (
     <div className="App">
