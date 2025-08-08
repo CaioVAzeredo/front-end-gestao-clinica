@@ -15,3 +15,165 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+@layer base {
+  :root {
+    /* Medical clinic color palette - Light mode */
+    --background: 210 20% 98%;
+    --foreground: 213 31% 9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 213 31% 9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 213 31% 9%;
+
+    /* Primary: Professional medical blue */
+    --primary: 213 94% 35%;
+    --primary-foreground: 0 0% 98%;
+    --primary-glow: 213 84% 45%;
+
+    /* Secondary: Soft medical green */
+    --secondary: 142 70% 45%;
+    --secondary-foreground: 0 0% 98%;
+
+    /* Muted: Light clinical gray */
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    /* Accent: Calming teal */
+    --accent: 184 65% 39%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 213 94% 35%;
+
+    --radius: 0.75rem;
+
+    /* Success: Medical success green */
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 98%;
+
+    /* Warning: Medical caution amber */
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 9%;
+
+    /* Info: Light medical blue */
+    --info: 213 84% 55%;
+    --info-foreground: 0 0% 98%;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
+    --gradient-secondary: linear-gradient(135deg, hsl(var(--secondary)), hsl(142 60% 55%));
+    --gradient-accent: linear-gradient(135deg, hsl(var(--accent)), hsl(184 55% 49%));
+
+    /* Shadows */
+    --shadow-soft: 0 2px 10px -3px hsl(var(--primary) / 0.1);
+    --shadow-medium: 0 4px 20px -6px hsl(var(--primary) / 0.15);
+    --shadow-strong: 0 8px 30px -12px hsl(var(--primary) / 0.25);
+
+    /* Sidebar */
+    --sidebar-background: 213 94% 35%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 0 0% 98%;
+    --sidebar-primary-foreground: 213 94% 35%;
+    --sidebar-accent: 213 84% 45%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 213 84% 45%;
+    --sidebar-ring: 0 0% 98%;
+  }
+}
+
+/* FullCalendar custom styles */
+.calendar-wrapper .fc {
+  font-family: inherit;
+}
+
+.calendar-wrapper .fc-theme-standard td,
+.calendar-wrapper .fc-theme-standard th {
+  border-color: hsl(var(--border));
+}
+
+.calendar-wrapper .fc-button-primary {
+  background-color: hsl(var(--primary));
+  border-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border-radius: 0.375rem;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.calendar-wrapper .fc-button-primary:hover:not(:disabled) {
+  background-color: hsl(var(--primary) / 0.9);
+  border-color: hsl(var(--primary) / 0.9);
+}
+
+.calendar-wrapper .fc-button-primary:focus {
+  box-shadow: 0 0 0 2px hsl(var(--ring) / 0.2);
+}
+
+.calendar-wrapper .fc-button-primary:disabled {
+  opacity: 0.5;
+}
+
+.calendar-wrapper .fc-toolbar-title {
+  color: hsl(var(--foreground));
+  font-weight: 600;
+  font-size: 1.25rem;
+}
+
+.calendar-wrapper .fc-col-header-cell {
+  background-color: hsl(var(--muted));
+  color: hsl(var(--muted-foreground));
+  font-weight: 500;
+  font-size: 0.875rem;
+  padding: 0.75rem 0.5rem;
+}
+
+.calendar-wrapper .fc-daygrid-day {
+  background-color: hsl(var(--background));
+}
+
+.calendar-wrapper .fc-daygrid-day:hover {
+  background-color: hsl(var(--muted) / 0.5);
+}
+
+.calendar-wrapper .fc-day-today {
+  background-color: hsl(var(--primary) / 0.05) !important;
+  border-color: hsl(var(--primary) / 0.2);
+}
+
+.calendar-wrapper .fc-event {
+  border-radius: 0.375rem;
+  padding: 0.125rem 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border: none;
+  margin: 0.125rem;
+}
+
+.calendar-wrapper .fc-event:hover {
+  opacity: 0.85;
+  cursor: pointer;
+}
+
+.calendar-wrapper .fc-timegrid-slot {
+  height: 2.5rem;
+}
+
+.calendar-wrapper .fc-timegrid-slot-label {
+  color: hsl(var(--muted-foreground));
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.calendar-wrapper .fc-now-indicator-line {
+  border-color: hsl(var(--destructive));
+  border-width: 2px;
+}

@@ -1,166 +1,192 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
-import styled from "styled-components";
-const REACT_APP_PORT = process.env.REACT_APP_PORT;
+import { useState } from 'react'
+import FullCalendar from '@fullcalendar/react'
+import dayGridPlugin from '@fullcalendar/daygrid'
+import timeGridPlugin from '@fullcalendar/timegrid'
+import interactionPlugin from '@fullcalendar/interaction'
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"
+import { Plus, CalendarDays } from "lucide-react"
+import { Button } from "../../components/ui/button"
 
-const Container = styled.div`
-  padding: 20px;
-  font-family: Arial, sans-serif;
+export default function Agenda() {
+  const [selectedAppointment, setSelectedAppointment] = useState(null)
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
 
-  .topo {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-  }
-
-  .agenda {
-    display: grid;
-    grid-template-columns: 100px repeat(4, 1fr);
-    gap: 8px;
-    background: #fff;
-  }
-
-  .hora, .col-header {
-    font-weight: bold;
-    text-align: center;
-    padding: 10px;
-    border-bottom: 1px solid #eee;
-  }
-
-  .slot {
-    min-height: 60px;
-    border: 1px solid #ddd;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    border-radius: 5px;
-    font-size: 14px;
-    cursor: pointer;
-    transition: background 0.3s;
-  }
-
-  .slot.disponivel {
-    background: #f9f9f9;
-    color: #888;
-  }
-
-  .slot.ocupado {
-    background: #e3f2fd;
-    color: #0d47a1;
-    flex-direction: column;
-  }
-
-  .resumo {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 20px;
-    margin-top: 30px;
-  }
-
-  .card {
-    padding: 20px;
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 0 5px rgba(0,0,0,0.1);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .card strong {
-    font-size: 20px;
-    margin-bottom: 5px;
-  }
-`;
-
-function Agenda() {
-  const [agendamentos, setAgendamentos] = useState([]);
-
-  const fetchAgendamentos = async () => {
-    try {
-      const response = await axios.get(`http://localhost:${REACT_APP_PORT}/api/agendamentos`);
-      setAgendamentos(response.data.data.$values);
-    } catch (error) {
-      console.error("Erro ao buscar agendamentos:", error);
+  // Dados simulados das consultas
+  const events = [
+    {
+      id: '1',
+      title: 'Maria Silva - Consulta Geral',
+      start: '2025-08-06T08:00:00',
+      end: '2025-08-06T08:30:00',
+      backgroundColor: 'hsl(var(--primary) / 0.8)',
+      borderColor: 'hsl(var(--primary))',
+      extendedProps: {
+        patient: "Maria Silva",
+        phone: "(11) 98765-4321",
+        service: "Consulta Geral",
+        doctor: "Dr. João Santos",
+        status: "confirmada",
+        notes: "Paciente com histórico de hipertensão",
+        address: "Rua das Flores, 123"
+      }
+    },
+    {
+      id: '2',
+      title: 'Carlos Oliveira - Cardiologia',
+      start: '2025-08-06T09:00:00',
+      end: '2025-08-06T09:45:00',
+      backgroundColor: 'hsl(var(--secondary) / 0.8)',
+      borderColor: 'hsl(var(--secondary))',
+      extendedProps: {
+        patient: "Carlos Oliveira",
+        phone: "(11) 91234-5678",
+        service: "Cardiologia",
+        doctor: "Dra. Ana Costa",
+        status: "pendente",
+        notes: "Primeira consulta - exames de rotina",
+        address: "Av. Principal, 456"
+      }
+    },
+    {
+      id: '3',
+      title: 'Lucia Ferreira - Dermatologia',
+      start: '2025-08-06T10:30:00',
+      end: '2025-08-06T11:00:00',
+      backgroundColor: 'hsl(var(--accent) / 0.8)',
+      borderColor: 'hsl(var(--accent))',
+      extendedProps: {
+        patient: "Lucia Ferreira",
+        phone: "(11) 95555-1234",
+        service: "Dermatologia",
+        doctor: "Dr. Pedro Lima",
+        status: "confirmada",
+        notes: "Retorno - acompanhamento tratamento",
+        address: "Rua da Saúde, 789"
+      }
+    },
+    {
+      id: '4',
+      title: 'Roberto Santos - Ortopedia',
+      start: '2025-08-06T14:00:00',
+      end: '2025-08-06T15:00:00',
+      backgroundColor: 'hsl(var(--success) / 0.8)',
+      borderColor: 'hsl(var(--success))',
+      extendedProps: {
+        patient: "Roberto Santos",
+        phone: "(11) 97777-8888",
+        service: "Ortopedia",
+        doctor: "Dra. Mariana Souza",
+        status: "confirmada",
+        notes: "Consulta pós-cirúrgica",
+        address: "Av. Central, 321"
+      }
+    },
+    {
+      id: '5',
+      title: 'Elena Costa - Pediatria',
+      start: '2025-08-06T15:30:00',
+      end: '2025-08-06T16:00:00',
+      backgroundColor: 'hsl(var(--warning) / 0.8)',
+      borderColor: 'hsl(var(--warning))',
+      extendedProps: {
+        patient: "Elena Costa",
+        phone: "(11) 96666-9999",
+        service: "Pediatria",
+        doctor: "Dr. Fernando Silva",
+        status: "cancelada",
+        notes: "Paciente solicitou reagendamento",
+        address: "Rua das Crianças, 654"
+      }
     }
-  };
+  ]
 
-  useEffect(() => {
-    fetchAgendamentos();
-  }, []);
+  const handleEventClick = (clickInfo) => {
+    setSelectedAppointment({
+      ...clickInfo.event.extendedProps,
+      id: clickInfo.event.id,
+      title: clickInfo.event.title,
+      start: clickInfo.event.start,
+      end: clickInfo.event.end
+    })
+    setIsDialogOpen(true)
+  }
 
-  const horas = [
-    "08:00", "09:00", "10:00", "11:00", "12:00",
-    "13:00", "14:00", "15:00", "16:00", "17:00",
-    "18:00", "19:00"
-  ];
-
-  const medicos = ["Dr. Silva", "Dr. Costa", "Dra. Lima", "Dr. Rocha"];
-
-  const getAgendamento = (hora, medico) => {
-    return agendamentos.find((a) => {
-      const agendamentoHora = new Date(a.dataHoraInicio).toLocaleTimeString("pt-BR", {hour: "2-digit", minute: "2-digit"});
-      return agendamentoHora === hora && a.funcionario?.nome === medico;
-    });
-  };
 
   return (
-    <Container>
-      <div className="topo">
-        <h3>segunda-feira, 28 de julho de 2025</h3>
-        <button style={{padding:"8px 12px", background:"#009688", color:"#fff", border:"none", borderRadius:"5px"}}>
-          + Agendar
-        </button>
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">
+            Agenda de atendimentos
+          </h1>
+        </div>
+        <div className="flex gap-2">
+          <Button>
+            <Plus className="h-4 w-4 mr-2" />
+            Nova Consulta
+          </Button>
+        </div>
       </div>
 
-      <div className="agenda">
-        <div></div>
-        {medicos.map((m) => (
-          <div key={m} className="col-header">{m}</div>
-        ))}
-        {horas.map((h) => (
-          <React.Fragment key={h}>
-            <div className="hora">{h}</div>
-            {medicos.map((m) => {
-              const ag = getAgendamento(h, m);
-              return (
-                <div key={`${h}-${m}`} className={`slot ${ag ? "ocupado" : "disponivel"}`}>
-                  {ag ? (
-                    <>
-                      <span><strong>{ag.cliente?.nome}</strong></span>
-                      <span>{ag.servico?.nomeServico}</span>
-                    </>
-                  ) : (
-                    <span>Disponível</span>
-                  )}
-                </div>
-              );
-            })}
-          </React.Fragment>
-        ))}
-      </div>
+      {/* Calendar */}
+      <Card className="shadow-soft">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium text-muted-foreground">
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="calendar-wrapper">
+            <FullCalendar
+              plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+              headerToolbar={{
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,timeGridDay'
+              }}
+              initialView='timeGridWeek'
+              editable={true}
+              selectable={true}
+              selectMirror={true}
+              dayMaxEvents={true}
+              weekends={true}
+              events={events}
+              eventClick={handleEventClick}
+              height="600px"
+              locale="pt-br"
+              allDaySlot={false}
+              slotMinTime="07:00:00"
+              slotMaxTime="20:00:00"
+              businessHours={{
+                daysOfWeek: [1, 2, 3, 4, 5, 6],
+                startTime: '08:00',
+                endTime: '18:00',
+              }}
+              nowIndicator={true}
+              eventTimeFormat={{
+                hour: '2-digit',
+                minute: '2-digit',
+                meridiem: false
+              }}
+              slotLabelFormat={{
+                hour: '2-digit',
+                minute: '2-digit',
+                meridiem: false
+              }}
+              buttonText={{
+                today: 'Hoje',
+                month: 'Mês',
+                week: 'Semana',
+                day: 'Dia'
+              }}
+              allDayText="Todo o dia"
+              noEventsText="Nenhuma consulta agendada"
+            />
+          </div>
+        </CardContent>
+      </Card>
 
-      <div className="resumo">
-        <div className="card">
-          <strong>12</strong>
-          Consultas Hoje
-        </div>
-        <div className="card">
-          <strong>85%</strong>
-          Taxa de Ocupação
-        </div>
-        <div className="card">
-          <strong>R$ 2.150</strong>
-          Receita do Dia
-        </div>
-        <div className="card">
-          <strong>2</strong>
-          Cancelamentos
-        </div>
-      </div>
-    </Container>
-  );
+
+    </div>
+  )
 }
-
-export default Agenda;
