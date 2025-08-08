@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import ModalCadastrarCliente from "../../components/ModalCadastrarCliente";
-import ModalNovaConsulta from "../../components/ModalNovaConsulta";
+import ModalNovoAtendimento from "../../components/ModalNovoAtendimento";
 
 const REACT_APP_PORT = process.env.REACT_APP_PORT;
 
@@ -128,7 +128,7 @@ const Container = styled.div`
 function Dashboard({ setPagina, setTitulo }) {
   const [dados, setDados] = useState(null);
   const [showModal, setShowModal] = useState(false);
-  const [showModalConsulta, setShowModalConsulta] = useState(false);
+  const [showModalAtendimento, setShowModalAtendimento] = useState(false);
 
   function pagRelatorios() {
     setPagina("relatorios");
@@ -143,12 +143,12 @@ function Dashboard({ setPagina, setTitulo }) {
 
       const hoje = new Date().toDateString();
 
-      const consultasHoje = agendamentos.data.$values.filter(
+      const atendimentosHoje = agendamentos.data.$values.filter(
         a => new Date(a.dataHoraInicio).toDateString() === hoje
       ).length;
 
       const totalHorariosDisponiveisHoje = 8; 
-      const taxaOcupacao = ((consultasHoje / totalHorariosDisponiveisHoje) * 100).toFixed(1);
+      const taxaOcupacao = ((atendimentosHoje / totalHorariosDisponiveisHoje) * 100).toFixed(1);
 
       const clientesNovos = clientes.data.$values.filter(
         c => new Date(c.dataCriacao) >= new Date(new Date().setDate(new Date().getDate() - 7))
@@ -157,7 +157,7 @@ function Dashboard({ setPagina, setTitulo }) {
       const receitaMes = agendamentos.data.$values.reduce((acc, ag) => acc + (ag.servico?.preco || 0), 0);
 
       setDados({
-        consultasHoje,
+        atendimentosHoje,
         clientesNovos,
         taxaOcupacao,
         receitaMes,
@@ -174,8 +174,8 @@ function Dashboard({ setPagina, setTitulo }) {
     <Container>
       <div className="grid">
         <div className="card">
-          <div className="title">Consultas Hoje</div>
-          <div className="value">{dados.consultasHoje}</div>
+          <div className="title">Atendimentos Hoje</div>
+          <div className="value">{dados.atendimentosHoje}</div>
           <div className="positive">+15% vs ontem</div>
         </div>
         <div className="card">
@@ -224,13 +224,13 @@ function Dashboard({ setPagina, setTitulo }) {
       </div>
 
       <div className="actions">
-        <button onClick={() => setShowModalConsulta(true)}>Nova Consulta</button>
+        <button onClick={() => setShowModalAtendimento(true)}>Agendar Atendimento</button>
         <button onClick={() => setShowModal(true)}>Cadastrar Cliente</button>
         <button onClick={pagRelatorios}>Ver Relatórios</button>
       </div>
 
       {showModal && <ModalCadastrarCliente onClose={() => setShowModal(false)} />}
-      {showModalConsulta && <ModalNovaConsulta onClose={() => setShowModalConsulta(false)} />}
+      {showModalAtendimento && <ModalNovoAtendimento onClose={() => setShowModalAtendimento(false)} />}
     </Container>
   );
 }

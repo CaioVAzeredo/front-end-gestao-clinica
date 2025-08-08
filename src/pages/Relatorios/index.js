@@ -110,16 +110,16 @@ function Relatorios() {
       const servicos = await fetch(`http://localhost:${REACT_APP_PORT}/api/servicos`)
         .then((res) => res.json());
 
-      const totalConsultas = agendamentos.data.$values.length;
+      const totalAtendimentos = agendamentos.data.$values.length;
       const totalClientes = clientes.data.$values.length;
       const listaServicos = servicos.data.$values;
 
       const receita = agendamentos.data.$values.reduce((acc, ag) => acc + (ag.servico?.preco || 0), 0);
       const compareceram = agendamentos.data.$values.filter((a) => a.statusAgenda === "HorarioMarcado").length;
-      const taxaComparecimento = ((compareceram / totalConsultas) * 100).toFixed(1);
+      const taxaComparecimento = ((compareceram / totalAtendimentos) * 100).toFixed(1);
 
       setRelatorio({
-        totalConsultas,
+        totalAtendimentos,
         totalClientes,
         receita,
         taxaComparecimento,
@@ -142,7 +142,7 @@ function Relatorios() {
       <div className="grid">
         <div className="card">
           <div className="kpi"><span className="label">Receita Total</span><span className="value">R$ {relatorio.receita.toLocaleString()}</span></div>
-          <div className="kpi"><span className="label">Total de Consultas</span><span className="value">{relatorio.totalConsultas}</span></div>
+          <div className="kpi"><span className="label">Total de Atendimentos</span><span className="value">{relatorio.totalAtendimentos}</span></div>
           <div className="kpi"><span className="label">Total de Pacientes</span><span className="value">{relatorio.totalClientes}</span></div>
           <div className="kpi"><span className="label">Taxa de Comparecimento</span><span className="value">{relatorio.taxaComparecimento}%</span></div>
         </div>

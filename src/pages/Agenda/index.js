@@ -29,11 +29,11 @@ export default function Agenda() {
   if (!agendamentos) return <p>Carregando...</p>;
   console.log(agendamentos);
 
-  // Dados simulados das consultas
+  // Dados simulados das atendimentos
   const events = [
     {
       id: '1',
-      title: 'Maria Silva - Consulta Geral',
+      title: 'Maria Silva - Atendimento Geral',
       start: '2025-08-06T08:00:00',
       end: '2025-08-06T08:30:00',
       backgroundColor: 'hsl(var(--primary) / 0.8)',
@@ -41,7 +41,7 @@ export default function Agenda() {
       extendedProps: {
         patient: "Maria Silva",
         phone: "(11) 98765-4321",
-        service: "Consulta Geral",
+        service: "Atendimento Geral",
         doctor: "Dr. João Santos",
         status: "confirmada",
         notes: "Paciente com histórico de hipertensão",
@@ -61,7 +61,7 @@ export default function Agenda() {
         service: "Cardiologia",
         doctor: "Dra. Ana Costa",
         status: "pendente",
-        notes: "Primeira consulta - exames de rotina",
+        notes: "Primeira atendimento - exames de rotina",
         address: "Av. Principal, 456"
       }
     }
@@ -91,7 +91,7 @@ export default function Agenda() {
         <div className="flex gap-2">
           <Button>
             <Plus className="h-4 w-4 mr-2" />
-            Nova Consulta
+            Agendar
           </Button>
         </div>
       </div>
@@ -147,7 +147,7 @@ export default function Agenda() {
                 day: 'Dia'
               }}
               allDayText="Todo o dia"
-              noEventsText="Nenhuma consulta agendada"
+              noEventsText="Nenhuma atendimento agendada"
             />
           </div>
         </CardContent>
