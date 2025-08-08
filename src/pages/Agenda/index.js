@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import FullCalendar from '@fullcalendar/react'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
@@ -7,9 +7,27 @@ import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/ca
 import { Plus, CalendarDays } from "lucide-react"
 import { Button } from "../../components/ui/button"
 
+const REACT_APP_PORT = process.env.REACT_APP_PORT;
+
 export default function Agenda() {
   const [selectedAppointment, setSelectedAppointment] = useState(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [agendamentos, setAgendamentos] = useState(null);
+
+  useEffect(() => {
+    const fetchDados = async () => {
+      const agendas = await fetch(`http://localhost:${REACT_APP_PORT}/api/agendamentos`).then(res => res.json());
+      setAgendamentos([
+        ...agendas.data.$values
+    ]);
+      console.log(agendamentos, agendas.data.$values);
+    };
+
+    fetchDados();
+  }, []);
+  
+  if (!agendamentos) return <p>Carregando...</p>;
+  console.log(agendamentos);
 
   // Dados simulados das consultas
   const events = [
@@ -45,57 +63,6 @@ export default function Agenda() {
         status: "pendente",
         notes: "Primeira consulta - exames de rotina",
         address: "Av. Principal, 456"
-      }
-    },
-    {
-      id: '3',
-      title: 'Lucia Ferreira - Dermatologia',
-      start: '2025-08-06T10:30:00',
-      end: '2025-08-06T11:00:00',
-      backgroundColor: 'hsl(var(--accent) / 0.8)',
-      borderColor: 'hsl(var(--accent))',
-      extendedProps: {
-        patient: "Lucia Ferreira",
-        phone: "(11) 95555-1234",
-        service: "Dermatologia",
-        doctor: "Dr. Pedro Lima",
-        status: "confirmada",
-        notes: "Retorno - acompanhamento tratamento",
-        address: "Rua da Saúde, 789"
-      }
-    },
-    {
-      id: '4',
-      title: 'Roberto Santos - Ortopedia',
-      start: '2025-08-06T14:00:00',
-      end: '2025-08-06T15:00:00',
-      backgroundColor: 'hsl(var(--success) / 0.8)',
-      borderColor: 'hsl(var(--success))',
-      extendedProps: {
-        patient: "Roberto Santos",
-        phone: "(11) 97777-8888",
-        service: "Ortopedia",
-        doctor: "Dra. Mariana Souza",
-        status: "confirmada",
-        notes: "Consulta pós-cirúrgica",
-        address: "Av. Central, 321"
-      }
-    },
-    {
-      id: '5',
-      title: 'Elena Costa - Pediatria',
-      start: '2025-08-06T15:30:00',
-      end: '2025-08-06T16:00:00',
-      backgroundColor: 'hsl(var(--warning) / 0.8)',
-      borderColor: 'hsl(var(--warning))',
-      extendedProps: {
-        patient: "Elena Costa",
-        phone: "(11) 96666-9999",
-        service: "Pediatria",
-        doctor: "Dr. Fernando Silva",
-        status: "cancelada",
-        notes: "Paciente solicitou reagendamento",
-        address: "Rua das Crianças, 654"
       }
     }
   ]
