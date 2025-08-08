@@ -20,7 +20,7 @@ const ModalContent = styled.div`
   background: #fff;
   padding: 20px;
   border-radius: 8px;
-  width: 450px;
+  width: 650px;
   max-height: 80vh;
   overflow-y: auto;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
@@ -84,6 +84,13 @@ const ModalContent = styled.div`
     border-radius: 5px;
     cursor: pointer;
   }
+
+  .erro {
+    color: red;
+    font-size: 12px;
+    margin-top: -4px;
+    margin-bottom: 6px;
+  }
 `;
 
 function ModalCadastrarCliente({ onClose, onSalvou }) {
@@ -103,10 +110,75 @@ function ModalCadastrarCliente({ onClose, onSalvou }) {
       cep: ""
     }
   });
+  const [erros, setErros] = useState({});
   const [salvando, setSalvando] = useState(false);
+
+  function validar() {
+    const novosErros = {};
+
+    // Nome obrigatório
+    if (!cliente.nome.trim()) {
+      novosErros.nome = "O nome é obrigatório.";
+    }
+
+    // Telefone - exatamente 11 dígitos
+    if (!cliente.telefone) {
+      novosErros.telefone = "O telefone é obrigatório.";
+    } else if (cliente.telefone.length !== 11) {
+      novosErros.telefone = "O telefone deve ter exatamente 11 números.";
+    }
+
+    // E-mail válido
+    if (!cliente.email.trim()) {
+      novosErros.email = "O e-mail é obrigatório.";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cliente.email)) {
+      novosErros.email = "E-mail inválido.";
+    }
+
+    // CPF - exatamente 11 dígitos
+    if (!cliente.cpf) {
+      novosErros.cpf = "O CPF é obrigatório.";
+    } else if (cliente.cpf.length !== 11) {
+      novosErros.cpf = "O CPF deve ter exatamente 11 números.";
+    }
+
+    // Logradouro obrigatório
+    if (!cliente.endereco.logradouro.trim()) {
+      novosErros.logradouro = "O logradouro é obrigatório.";
+    }
+
+    // Número - exatamente 2 caracteres
+    if (!cliente.endereco.numero) {
+      novosErros.numero = "O número é obrigatório.";
+    }
+
+    // Cidade obrigatória
+    if (!cliente.endereco.cidade.trim()) {
+      novosErros.cidade = "A cidade é obrigatória.";
+    }
+
+    // UF - exatamente 2 letras
+    if (!cliente.endereco.uf) {
+      novosErros.uf = "O UF é obrigatório.";
+    } else if (!/^[A-Za-z]{2}$/.test(cliente.endereco.uf)) {
+      novosErros.uf = "O UF deve ter exatamente 2 letras.";
+    }
+
+    // CEP - exatamente 8 números
+    if (!cliente.endereco.cep) {
+      novosErros.cep = "O CEP é obrigatório.";
+    } else if (!/^\d{8}$/.test(cliente.endereco.cep)) {
+      novosErros.cep = "O CEP deve ter exatamente 8 números.";
+    }
+
+    setErros(novosErros);
+    return Object.keys(novosErros).length === 0;
+  }
 
   async function salvarCliente(e) {
     e.preventDefault();
+    if (!validar()) return;
+
     setSalvando(true);
     try {
       const resp = await fetch(`http://localhost:${REACT_APP_PORT}/api/clientes`, {
@@ -151,24 +223,35 @@ function ModalCadastrarCliente({ onClose, onSalvou }) {
             value={cliente.nome}
             onChange={(e) => setCliente({ ...cliente, nome: e.target.value })}
           />
+          {erros.nome && <div className="erro">{erros.nome}</div>}
 
           <label>Telefone</label>
           <input
             value={cliente.telefone}
-            onChange={(e) => setCliente({ ...cliente, telefone: e.target.value })}
+            maxLength={11}
+            onChange={(e) =>
+              setCliente({ ...cliente, telefone: e.target.value.replace(/\D/g, "") })
+            }
           />
+          {erros.telefone && <div className="erro">{erros.telefone}</div>}
 
           <label>E-mail</label>
           <input
+            type="email"
             value={cliente.email}
             onChange={(e) => setCliente({ ...cliente, email: e.target.value })}
           />
+          {erros.email && <div className="erro">{erros.email}</div>}
 
           <label>CPF</label>
           <input
             value={cliente.cpf}
-            onChange={(e) => setCliente({ ...cliente, cpf: e.target.value })}
+            maxLength={11}
+            onChange={(e) =>
+              setCliente({ ...cliente, cpf: e.target.value.replace(/\D/g, "") })
+            }
           />
+          {erros.cpf && <div className="erro">{erros.cpf}</div>}
 
           <label>Observações</label>
           <textarea
@@ -193,36 +276,57 @@ function ModalCadastrarCliente({ onClose, onSalvou }) {
             value={cliente.endereco.logradouro}
             onChange={handleEnderecoChange}
           />
+          {erros.logradouro && <div className="erro">{erros.logradouro}</div>}
+
           <label>Número</label>
           <input
             name="numero"
+            maxLength={10000}
             value={cliente.endereco.numero}
             onChange={handleEnderecoChange}
           />
+          {erros.numero && <div className="erro">{erros.numero}</div>}
+
           <label>Complemento</label>
           <input
             name="complemento"
             value={cliente.endereco.complemento}
             onChange={handleEnderecoChange}
           />
+
           <label>Cidade</label>
           <input
             name="cidade"
             value={cliente.endereco.cidade}
             onChange={handleEnderecoChange}
           />
+          {erros.cidade && <div className="erro">{erros.cidade}</div>}
+
           <label>UF</label>
           <input
             name="uf"
+            maxLength={2}
             value={cliente.endereco.uf}
-            onChange={handleEnderecoChange}
+            onChange={(e) =>
+              handleEnderecoChange({
+                target: { name: "uf", value: e.target.value.toUpperCase() }
+              })
+            }
           />
+          {erros.uf && <div className="erro">{erros.uf}</div>}
+
           <label>CEP</label>
           <input
             name="cep"
+            maxLength={8}
             value={cliente.endereco.cep}
-            onChange={handleEnderecoChange}
+            onChange={(e) =>
+              handleEnderecoChange({
+                target: { name: "cep", value: e.target.value.replace(/\D/g, "") }
+              })
+            }
           />
+          {erros.cep && <div className="erro">{erros.cep}</div>}
 
           <div className="modal-actions">
             <button type="button" className="cancelar" onClick={onClose} disabled={salvando}>

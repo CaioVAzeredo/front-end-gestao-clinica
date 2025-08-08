@@ -19,6 +19,13 @@ const Card = styled.div`
   width: 100%;
   max-width: 500px;
   text-align: left;
+
+  .erro {
+    color: red;
+    font-size: 12px;
+    margin-top: -10px;
+    margin-bottom: 10px;
+  }
 `;
 
 const Titulo = styled.h1`
@@ -46,7 +53,7 @@ const Label = styled.label`
 const Input = styled.input`
   width: 100%;
   padding: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 8px;
   border: 1px solid #ccc;
   border-radius: 8px;
   font-size: 14px;
@@ -60,7 +67,7 @@ const Input = styled.input`
 const Select = styled.select`
   width: 100%;
   padding: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 8px;
   border: 1px solid #ccc;
   border-radius: 8px;
   font-size: 14px;
@@ -100,75 +107,115 @@ const LinkLogin = styled.span`
 `;
 
 function Registro() {
-  const [nome, setNome] = useState("");
-  const [email, setEmail] = useState("");
-  const [senha, setSenha] = useState("");
-  const [telefone, setTelefone] = useState("");
-  const [cpf, setCpf] = useState("");
-  const [dataNascimento, setDataNascimento] = useState("");
-  const [perfil, setPerfil] = useState("funcionario");
+  const [form, setForm] = useState({
+    nome: "",
+    email: "",
+    senha: "",
+    telefone: "",
+    cpf: "",
+    dataNascimento: "",
+    perfil: "funcionario",
+    logradouro: "",
+    numero: "",
+    complemento: "",
+    cidade: "",
+    uf: "",
+    cep: ""
+  });
 
-  // Endereço
-  const [logradouro, setLogradouro] = useState("");
-  const [numero, setNumero] = useState("");
-  const [complemento, setComplemento] = useState("");
-  const [cidade, setCidade] = useState("");
-  const [uf, setUf] = useState("");
-  const [cep, setCep] = useState("");
-
+  const [erros, setErros] = useState({});
   const navigate = useNavigate();
+
+  const validar = () => {
+    const novosErros = {};
+
+    if (!form.nome.trim()) novosErros.nome = "O nome é obrigatório.";
+    if (!form.email.trim()) {
+      novosErros.email = "O e-mail é obrigatório.";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      novosErros.email = "E-mail inválido.";
+    }
+    if (!form.senha.trim()) {
+      novosErros.senha = "A senha é obrigatória.";
+    } 
+    if (!form.telefone) {
+      novosErros.telefone = "O telefone é obrigatório.";
+    } else if (form.telefone.length !== 11) {
+      novosErros.telefone = "O telefone deve ter exatamente 11 números.";
+    }
+    if (!form.cpf) {
+      novosErros.cpf = "O CPF é obrigatório.";
+    } else if (form.cpf.length !== 11) {
+      novosErros.cpf = "O CPF deve ter exatamente 11 números.";
+    }
+    if (!form.dataNascimento) novosErros.dataNascimento = "A data de nascimento é obrigatória.";
+    if (!form.logradouro.trim()) novosErros.logradouro = "O logradouro é obrigatório.";
+    if (!form.numero) novosErros.numero = "O número é obrigatório.";
+    if (!form.cidade.trim()) novosErros.cidade = "A cidade é obrigatória.";
+    if (!form.uf) {
+      novosErros.uf = "O UF é obrigatório.";
+    } else if (!/^[A-Za-z]{2}$/.test(form.uf)) {
+      novosErros.uf = "O UF deve ter exatamente 2 letras.";
+    }
+    if (!form.cep) {
+      novosErros.cep = "O CEP é obrigatório.";
+    } else if (!/^\d{8}$/.test(form.cep)) {
+      novosErros.cep = "O CEP deve ter exatamente 8 números.";
+    }
+
+    setErros(novosErros);
+    return Object.keys(novosErros).length === 0;
+  };
+
+  const handleChange = (e) => {
+    let { name, value } = e.target;
+    if (name === "telefone" || name === "cpf" || name === "cep") {
+      value = value.replace(/\D/g, "");
+    }
+    if (name === "uf") {
+      value = value.toUpperCase();
+    }
+    setForm({ ...form, [name]: value });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validar()) return;
 
-    const camposPreenchidos = [
-      nome, email, senha, telefone, cpf, dataNascimento, perfil,
-      logradouro, numero, cidade, uf, cep
-    ].every(Boolean); // verifica se todos têm valor
-
-    if (camposPreenchidos) {
-      const agora = new Date().toISOString();
-
-      const funcionario = {
-        nome,
-        telefone,
-        email,
-        cpf,
-        dataNascimento,
-        senhaHash: senha,
-        perfil,
-        ativo: true,
+    const agora = new Date().toISOString();
+    const funcionario = {
+      nome: form.nome,
+      telefone: form.telefone,
+      email: form.email,
+      cpf: form.cpf,
+      dataNascimento: form.dataNascimento,
+      senhaHash: form.senha,
+      perfil: form.perfil,
+      ativo: true,
+      dataCriacao: agora,
+      ultimaAtualizacao: agora,
+      enderecoId: 0,
+      endereco: {
+        idEndereco: 0,
+        logradouro: form.logradouro,
+        numero: form.numero,
+        complemento: form.complemento,
+        cidade: form.cidade,
+        uf: form.uf,
+        cep: form.cep,
         dataCriacao: agora,
-        ultimaAtualizacao: agora,
-        enderecoId: 0,
-        endereco: {
-          idEndereco: 0,
-          logradouro,
-          numero,
-          complemento,
-          cidade,
-          uf,
-          cep,
-          dataCriacao: agora,
-          ultimaAtualizacao: agora
-        }
-      };
-
-      try {
-        await axios.post("http://localhost:5239/api/funcionarios", funcionario);
-        alert("Cadastro realizado com sucesso!");
-        navigate("/login");
-      } catch (error) {
-        console.error("Erro ao cadastrar:", error);
-        alert("Erro ao cadastrar. Verifique os dados.");
+        ultimaAtualizacao: agora
       }
-    } else {
-      alert("Por favor, preencha todos os campos obrigatórios.");
-    }
-  };
+    };
 
-  const voltarLogin = () => {
-    navigate("/");
+    try {
+      await axios.post("http://localhost:5239/api/funcionarios", funcionario);
+      alert("Cadastro realizado com sucesso!");
+      navigate("/login");
+    } catch (error) {
+      console.error("Erro ao cadastrar:", error);
+      alert("Erro ao cadastrar. Verifique os dados.");
+    }
   };
 
   return (
@@ -178,55 +225,65 @@ function Registro() {
         <Subtitulo>Crie sua conta para acessar o sistema</Subtitulo>
 
         <form onSubmit={handleSubmit}>
-          <Label htmlFor="nome">Nome completo</Label>
-          <Input id="nome" value={nome} onChange={(e) => setNome(e.target.value)} required />
+          <Label>Nome completo</Label>
+          <Input name="nome" value={form.nome} onChange={handleChange} />
+          {erros.nome && <div className="erro">{erros.nome}</div>}
 
-          <Label htmlFor="email">E-mail</Label>
-          <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <Label>E-mail</Label>
+          <Input name="email" type="email" value={form.email} onChange={handleChange} />
+          {erros.email && <div className="erro">{erros.email}</div>}
 
-          <Label htmlFor="senha">Senha</Label>
-          <Input id="senha" type="password" value={senha} onChange={(e) => setSenha(e.target.value)} required />
+          <Label>Senha</Label>
+          <Input name="senha" type="password" value={form.senha} onChange={handleChange} />
+          {erros.senha && <div className="erro">{erros.senha}</div>}
 
-          <Label htmlFor="telefone">Telefone</Label>
-          <Input id="telefone" value={telefone} onChange={(e) => setTelefone(e.target.value)} required />
+          <Label>Telefone</Label>
+          <Input name="telefone" maxLength={11} value={form.telefone} onChange={handleChange} />
+          {erros.telefone && <div className="erro">{erros.telefone}</div>}
 
-          <Label htmlFor="cpf">CPF</Label>
-          <Input id="cpf" value={cpf} onChange={(e) => setCpf(e.target.value)} required />
+          <Label>CPF</Label>
+          <Input name="cpf" maxLength={11} value={form.cpf} onChange={handleChange} />
+          {erros.cpf && <div className="erro">{erros.cpf}</div>}
 
-          <Label htmlFor="dataNascimento">Data de Nascimento</Label>
-          <Input id="dataNascimento" type="date" value={dataNascimento} onChange={(e) => setDataNascimento(e.target.value)} required />
+          <Label>Data de Nascimento</Label>
+          <Input name="dataNascimento" type="date" value={form.dataNascimento} onChange={handleChange} />
+          {erros.dataNascimento && <div className="erro">{erros.dataNascimento}</div>}
 
-          <Label htmlFor="perfil">Perfil</Label>
-          <Select id="perfil" value={perfil} onChange={(e) => setPerfil(e.target.value)} required>
+          <Label>Perfil</Label>
+          <Select name="perfil" value={form.perfil} onChange={handleChange}>
             <option value="funcionario">Funcionário</option>
             <option value="admin">Administrador</option>
           </Select>
 
-          {/* Endereço */}
-          <h1>Endereco</h1>
-          <Label htmlFor="logradouro">Logradouro</Label>
-          <Input id="logradouro" value={logradouro} onChange={(e) => setLogradouro(e.target.value)} required />
+          <h3>Endereço</h3>
+          <Label>Logradouro</Label>
+          <Input name="logradouro" value={form.logradouro} onChange={handleChange} />
+          {erros.logradouro && <div className="erro">{erros.logradouro}</div>}
 
-          <Label htmlFor="numero">Número</Label>
-          <Input id="numero" value={numero} onChange={(e) => setNumero(e.target.value)} required />
+          <Label>Número</Label>
+          <Input name="numero" value={form.numero} onChange={handleChange} />
+          {erros.numero && <div className="erro">{erros.numero}</div>}
 
-          <Label htmlFor="complemento">Complemento</Label>
-          <Input id="complemento" value={complemento} onChange={(e) => setComplemento(e.target.value)} />
+          <Label>Complemento</Label>
+          <Input name="complemento" value={form.complemento} onChange={handleChange} />
 
-          <Label htmlFor="cidade">Cidade</Label>
-          <Input id="cidade" value={cidade} onChange={(e) => setCidade(e.target.value)} required />
+          <Label>Cidade</Label>
+          <Input name="cidade" value={form.cidade} onChange={handleChange} />
+          {erros.cidade && <div className="erro">{erros.cidade}</div>}
 
-          <Label htmlFor="uf">UF</Label>
-          <Input id="uf" value={uf} onChange={(e) => setUf(e.target.value)} required />
+          <Label>UF</Label>
+          <Input name="uf" maxLength={2} value={form.uf} onChange={handleChange} />
+          {erros.uf && <div className="erro">{erros.uf}</div>}
 
-          <Label htmlFor="cep">CEP</Label>
-          <Input id="cep" value={cep} onChange={(e) => setCep(e.target.value)} required />
+          <Label>CEP</Label>
+          <Input name="cep" maxLength={8} value={form.cep} onChange={handleChange} />
+          {erros.cep && <div className="erro">{erros.cep}</div>}
 
           <Botao type="submit">Cadastrar</Botao>
         </form>
 
         <p>
-          Já tem uma conta? <LinkLogin onClick={voltarLogin}>Fazer login</LinkLogin>
+          Já tem uma conta? <LinkLogin onClick={() => navigate("/")}>Fazer login</LinkLogin>
         </p>
       </Card>
     </Container>
