@@ -82,8 +82,8 @@ const ModalContent = styled.div`
   }
 `;
 
-function ModalNovaConsulta({ onClose }) {
-  const [consulta, setConsulta] = useState({
+function ModalNovoAtendimento({ onClose }) {
+  const [atendimento, setAtendimento] = useState({
     clienteId: "",
     servicoId: "",
     funcionarioId: "", // <-- ID fixo temporário
@@ -115,17 +115,17 @@ useEffect(() => {
 }, []);
 
 
-  async function salvarConsulta() {
+  async function salvarAtendimento() {
     try {
       await fetch(`http://localhost:${REACT_APP_PORT}/api/agendamentos`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(consulta)
+        body: JSON.stringify(atendimento)
       });
-      alert("Consulta cadastrada com sucesso!");
+      alert("Atendimento cadastrada com sucesso!");
       onClose();
     } catch (error) {
-      console.error("Erro ao cadastrar consulta", error);
+      console.error("Erro ao cadastrar atendimento", error);
     }
   }
 
@@ -133,12 +133,12 @@ useEffect(() => {
     <ModalOverlay onClick={onClose}>
       <ModalContent onClick={e => e.stopPropagation()}>
         <button className="close-button" onClick={onClose}>×</button>
-        <h2>Nova Consulta</h2>
+        <h2>Atendimento</h2>
 
         <label>Cliente</label>
         <select
-          value={consulta.clienteId}
-          onChange={e => setConsulta({ ...consulta, clienteId: e.target.value })}
+          value={atendimento.clienteId}
+          onChange={e => setAtendimento({ ...atendimento, clienteId: e.target.value })}
         >
           <option value="">Selecione...</option>
           {clientes.map(c => (
@@ -147,8 +147,8 @@ useEffect(() => {
         </select>
 <label>Funcionário</label>
 <select
-  value={consulta.funcionarioId}
-  onChange={e => setConsulta({ ...consulta, funcionarioId: parseInt(e.target.value) })}
+  value={atendimento.funcionarioId}
+  onChange={e => setAtendimento({ ...atendimento, funcionarioId: parseInt(e.target.value) })}
 >
   <option value="">Selecione...</option>
   {funcionarios.map(f => (
@@ -160,8 +160,8 @@ useEffect(() => {
 
         <label>Serviço</label>
         <select
-          value={consulta.servicoId}
-          onChange={e => setConsulta({ ...consulta, servicoId: e.target.value })}
+          value={atendimento.servicoId}
+          onChange={e => setAtendimento({ ...atendimento, servicoId: e.target.value })}
         >
           <option value="">Selecione...</option>
           {servicos.map(s => (
@@ -172,28 +172,28 @@ useEffect(() => {
         <label>Data e Hora</label>
         <input
           type="datetime-local"
-          value={consulta.dataHoraInicio}
-          onChange={e => setConsulta({ ...consulta, dataHoraInicio: e.target.value })}
+          value={atendimento.dataHoraInicio}
+          onChange={e => setAtendimento({ ...atendimento, dataHoraInicio: e.target.value })}
         />
 
         <label>Duração do Atendimento (minutos)</label>
         <input
           type="number"
-          value={consulta.duracaoAtendimento}
-          onChange={e => setConsulta({ ...consulta, duracaoAtendimento: parseInt(e.target.value) || 0 })}
+          value={atendimento.duracaoAtendimento}
+          onChange={e => setAtendimento({ ...atendimento, duracaoAtendimento: parseInt(e.target.value) || 0 })}
         />
 
         <label>Observações</label>
         <textarea
           rows="3"
-          value={consulta.observacoes}
-          onChange={e => setConsulta({ ...consulta, observacoes: e.target.value })}
+          value={atendimento.observacoes}
+          onChange={e => setAtendimento({ ...atendimento, observacoes: e.target.value })}
         />
 
         <label>Status da Agenda</label>
         <select
-          value={consulta.statusAgenda}
-          onChange={e => setConsulta({ ...consulta, statusAgenda: e.target.value })}
+          value={atendimento.statusAgenda}
+          onChange={e => setAtendimento({ ...atendimento, statusAgenda: e.target.value })}
         >
           <option value="HorarioMarcado">Horário Marcado</option>
           <option value="Cancelado">Cancelado</option>
@@ -202,11 +202,11 @@ useEffect(() => {
 
         <div className="modal-actions">
           <button className="cancelar" onClick={onClose}>Cancelar</button>
-          <button onClick={salvarConsulta}>Salvar</button>
+          <button onClick={salvarAtendimento}>Salvar</button>
         </div>
       </ModalContent>
     </ModalOverlay>
   );
 }
 
-export default ModalNovaConsulta;
+export default ModalNovoAtendimento;
