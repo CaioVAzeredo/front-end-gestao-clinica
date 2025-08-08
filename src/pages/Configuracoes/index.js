@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import styled from "styled-components";
+import { useNavigate } from "react-router-dom";
+
 const REACT_APP_PORT = process.env.REACT_APP_PORT;
 
 const Container = styled.div`
@@ -88,7 +90,6 @@ const Container = styled.div`
     background: #00796b;
   }
 
-  /* ---- RESPONSIVIDADE ---- */
   @media (max-width: 768px) {
     .bemvindo {
       font-size: 32px;
@@ -126,6 +127,7 @@ function ConfiguracoesConta() {
     telefone: "",
     email: "",
     cpf: "",
+    senha: "",
     logradouro: "",
     numero: "",
     complemento: "",
@@ -134,82 +136,117 @@ function ConfiguracoesConta() {
     cep: ""
   });
 
+
   const [usuario, setUsuario] = useState("");
+  const navigate = useNavigate();
+  const funcionarioId = localStorage.getItem("funcionarioId");
+  const token = localStorage.getItem("authToken");
 
   useEffect(() => {
-    axios
-      .get(`http://localhost:${REACT_APP_PORT}/api/funcionarios`)
-      .then((response) => {
-        const funcionario =
-          response.data.$values && response.data.$values.length > 0
-            ? response.data.$values[0]
-            : response.data;
-        setUsuario(funcionario.nome);
-        setForm({
-          nome: funcionario.nome || "",
-          telefone: funcionario.telefone || "",
-          email: funcionario.email || "",
-          cpf: funcionario.cpf || "",
-          logradouro: funcionario.endereco?.logradouro || "",
-          numero: funcionario.endereco?.numero || "",
-          complemento: funcionario.endereco?.complemento || "",
-          cidade: funcionario.endereco?.cidade || "",
-          uf: funcionario.endereco?.uf || "",
-          cep: funcionario.endereco?.cep || ""
+    const token = localStorage.getItem("authToken");
+    const funcionarioId = localStorage.getItem("funcionarioId");
+
+    if (!token || !funcionarioId) {
+      alert("Você precisa estar logado.");
+      navigate("/login");
+      return;
+    }
+
+    const buscarDadosFuncionario = async () => {
+      try {
+        const response = await fetch(`http://localhost:${REACT_APP_PORT}/api/funcionarios/${funcionarioId}`, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
         });
-      })
-      .catch((error) => console.error("Erro ao buscar dados:", error));
+
+        const data = await response.json();
+
+        if (response.ok) {
+          setUsuario(data.nome); // para mostrar "Olá, Fulano"
+          setForm({
+  nome: data.nome || "",
+  telefone: data.telefone || "",
+  email: data.email || "",
+  cpf: data.cpf || "",
+  senha: data.senhaHash || "", 
+  logradouro: data.endereco?.logradouro || "",
+  numero: data.endereco?.numero || "",
+  complemento: data.endereco?.complemento || "",
+  cidade: data.endereco?.cidade || "",
+  uf: data.endereco?.uf || "",
+  cep: data.endereco?.cep || ""
+});
+
+        } else {
+          console.error("Erro ao buscar funcionário:", data.message);
+        }
+      } catch (error) {
+        console.error("Erro na requisição:", error);
+      }
+    };
+
+    buscarDadosFuncionario();
   }, []);
+
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-const handleSalvar = () => {
-  const agora = new Date().toISOString();
+  const handleSalvar = () => {
+    const agora = new Date().toISOString();
 
-  const dadosAtualizados = {
-    nome: form.nome,
-    telefone: form.telefone,
-    email: form.email,
-    cpf: form.cpf,
-    dataNascimento: agora,  // se não houver campo na tela, envia padrão
-    idFuncionario: 2,       // fixo
-    senhaHash: "string",    // valor fixo, ajuste conforme API real
-    perfil: "string",       // ajuste conforme o perfil real do funcionário
-    ativo: true,
+    const dadosAtualizados = {
+  idFuncionario: parseInt(funcionarioId),
+  nome: form.nome,
+  telefone: form.telefone,
+  email: form.email,
+  cpf: form.cpf,
+  senhaHash: form.senha, // 👈 agora envia sempre
+  dataNascimento: agora,
+  perfil: localStorage.getItem("perfil") || "funcionario",
+  ativo: true,
+  dataCriacao: agora,
+  ultimaAtualizacao: agora,
+  enderecoId: 0,
+  endereco: {
+    idEndereco: 0,
+    logradouro: form.logradouro,
+    numero: form.numero,
+    complemento: form.complemento,
+    cidade: form.cidade,
+    uf: form.uf,
+    cep: form.cep,
     dataCriacao: agora,
-    ultimaAtualizacao: agora,
-    enderecoId: 0,
-    endereco: {
-      idEndereco: 0,
-      logradouro: form.logradouro,
-      numero: form.numero,
-      complemento: form.complemento,
-      cidade: form.cidade,
-      uf: form.uf,
-      cep: form.cep,
-      dataCriacao: agora,
-      ultimaAtualizacao: agora
-    }
-  };
-
-  axios
-    .put(`http://localhost:${REACT_APP_PORT}/api/funcionarios/2`, dadosAtualizados)
-    .then(() => alert("Dados atualizados com sucesso!"))
-    .catch((err) => {
-      console.error("Erro ao salvar:", err.response ? err.response.data : err);
-      alert("Erro ao salvar os dados. Verifique os campos e tente novamente.");
-    });
+    ultimaAtualizacao: agora
+  }
 };
 
 
+    if (form.senha.trim() !== "") {
+      dadosAtualizados.senhaHash = form.senha;
+    }
+
+
+
+    axios
+      .put(`http://localhost:${REACT_APP_PORT}/api/funcionarios/${funcionarioId}`, dadosAtualizados, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+      .then(() => alert("Dados atualizados com sucesso!"))
+      .catch((err) => {
+        console.error("Erro ao salvar:", err.response ? err.response.data : err);
+        alert("Erro ao salvar os dados. Verifique os campos e tente novamente.");
+      });
+  };
 
   const handleLogout = () => {
-    alert("Logout realizado!");
-    // Aqui você pode limpar tokens e redirecionar, ex:
-    // localStorage.removeItem("token");
-    // window.location.href = "/login";
+    localStorage.clear();
+    navigate("/login");
   };
 
   return (
@@ -271,7 +308,20 @@ const handleSalvar = () => {
             <input name="cep" value={form.cep} onChange={handleChange} />
           </div>
         </div>
+  <div className="col">
+    <label>Senha</label>
+    <input
+      name="senha"
+      type="text"
+      value={form.senha}
+      onChange={handleChange}
+    />
+  </div>
       </div>
+      <div className="linha">
+</div>
+
+
 
       <button className="btn-salvar" onClick={handleSalvar}>
         Salvar Alterações
