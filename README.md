@@ -77,6 +77,6 @@ Os arquivos de produção serão gerados na pasta build/.
 ![Funcionarios](capturas/funcionarios.png "Tela de profissionais")
 
 ## Relatórios
-![Relatorio](capturas/relatorio.png "Tela de relatórios")
+![Relatorio](capturas/relatorio.jpeg "Tela de relatórios")
 
 
