@@ -16,13 +16,14 @@ import Clientes from "../Clientes";
 import Servicos from "../Servicos";
 import Relatorios from "../Relatorios";
 import Configuracoes from "../Configuracoes";
-import Funcionarios from "../Funcionarios"; // ✅ import
+import Funcionarios from "../Funcionarios";
 
 const Layout = styled.div`
   display: flex;
   height: 100vh;
   font-family: Arial, sans-serif;
   flex-direction: column;
+  position: relative; /* para ancorar o badge */
 `;
 
 const Main = styled.div`
@@ -98,7 +99,7 @@ const MenuItem = styled.li`
 
     span {
       display: ${({ collapsed, mobileOpen }) =>
-    collapsed && !mobileOpen ? "none" : "inline"};
+        collapsed && !mobileOpen ? "none" : "inline"};
       transition: opacity 0.3s;
     }
   }
@@ -117,6 +118,77 @@ const PageContent = styled.div`
   overflow-y: auto;
 `;
 
+/* === Badge do usuário (topo direito) === */
+const UserBadge = styled.div`
+  position: fixed;        /* fica por cima, independente do Header */
+  top: 12px;
+  right: 16px;
+  z-index: 1101;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #ffffff;
+  border-radius: 999px;
+  padding: 6px 12px;
+  cursor: pointer;
+  @media (max-width: 768px) {
+    top: 8px;
+    right: 10px;
+    padding: 6px 10px;
+  }
+`;
+
+const Avatar = styled.div`
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background: #009688;
+  color: #fff;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  flex-shrink: 0;
+`;
+
+const UserText = styled.div`
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+
+  .name {
+    font-size: 14px;
+    color: #333;
+    font-weight: 700;
+    max-width: 180px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .status {
+    margin-top: 2px;
+    font-size: 12px;
+    color: #28a745;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+
+    &::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      background: #28a745;
+      border-radius: 50%;
+      display: inline-block;
+    }
+  }
+`;
+
+/* ================================ */
+
 function PaginaBase() {
   const [pagina, setPagina] = useState("dashboard");
   const [titulo, setTitulo] = useState("Dashboard");
@@ -127,24 +199,35 @@ function PaginaBase() {
   const [showSidebarMobile, setShowSidebarMobile] = useState(false);
   const [token, setToken] = useState(null);
 
-useEffect(() => {
-  const tokenSalvo = localStorage.getItem("authToken");
-  if (tokenSalvo) {
-    setToken(tokenSalvo);
-  }
-}, []);
+  const nomeUsuario =
+    localStorage.getItem("nome") ||
+    localStorage.getItem("usuarioNome") ||
+    "Usuário";
 
+  const getInitials = (nome) => {
+    if (!nome || typeof nome !== "string") return "U";
+    const parts = nome.trim().split(/\s+/).filter(Boolean);
+    const first = parts[0]?.[0] || "";
+    const second = parts.length > 1 ? parts[parts.length - 1][0] : "";
+    return (first + second).toUpperCase() || "U";
+  };
+
+  const iniciais = getInitials(nomeUsuario);
+
+  useEffect(() => {
+    const tokenSalvo = localStorage.getItem("authToken");
+    if (tokenSalvo) setToken(tokenSalvo);
+  }, []);
 
   const paginas = {
     dashboard: <DashBoard setPagina={setPagina} setTitulo={setTitulo} />,
     agenda: <Agenda />,
     clientes: <Clientes />,
-    Funcionarios: <Funcionarios />, // ✅ adicionado
+    Funcionarios: <Funcionarios />,
     servicos: <Servicos />,
     relatorios: <Relatorios />,
     configuracoes: <Configuracoes />,
   };
-
 
   const menuItems = [
     { key: "dashboard", label: "Dashboard", icon: <FiHome /> },
@@ -157,7 +240,6 @@ useEffect(() => {
     { key: "relatorios", label: "Relatórios", icon: <FiBarChart2 /> },
     { key: "configuracoes", label: "Configurações", icon: <FiSettings /> },
   ];
-
 
   const handleToggleSidebar = () => {
     if (window.innerWidth <= 768) {
@@ -172,7 +254,7 @@ useEffect(() => {
     setTitulo(item.label);
     setFiltro(item.key);
     setIcone(item.key);
-    setShowSidebarMobile(false); // fecha menu no mobile
+    setShowSidebarMobile(false);
   };
 
   return (
@@ -185,6 +267,21 @@ useEffect(() => {
         setIcone={setIcone}
         toggleSidebar={handleToggleSidebar}
       />
+
+      {/* Badge do Usuário */}
+      <UserBadge
+        onClick={() => {
+          setPagina("configuracoes");
+          setTitulo("Configurações");
+          setFiltro("configuracoes");
+        }}
+      >
+        <Avatar>{iniciais}</Avatar>
+        <UserText>
+          <span className="name">{nomeUsuario}</span>
+          <span className="status">online</span>
+        </UserText>
+      </UserBadge>
 
       <Main>
         <Overlay visible={showSidebarMobile} onClick={() => setShowSidebarMobile(false)} />
