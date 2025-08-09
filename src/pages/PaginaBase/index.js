@@ -17,6 +17,7 @@ import Servicos from "../Servicos";
 import Relatorios from "../Relatorios";
 import Configuracoes from "../Configuracoes";
 import Funcionarios from "../Funcionarios";
+import Footer from "../../components/Footer";
 
 const Layout = styled.div`
   display: flex;
@@ -311,6 +312,7 @@ function PaginaBase() {
           <PageContent>{paginas[pagina]}</PageContent>
         </Content>
       </Main>
+      <Footer />
     </Layout>
   );
 }
