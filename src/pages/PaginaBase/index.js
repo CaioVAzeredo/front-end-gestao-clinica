@@ -120,7 +120,7 @@ const PageContent = styled.div`
 
 /* === Badge do usuário (topo direito) === */
 const UserBadge = styled.div`
-  position: fixed;        /* fica por cima, independente do Header */
+  position: fixed;
   top: 12px;
   right: 16px;
   z-index: 1101;
@@ -130,7 +130,13 @@ const UserBadge = styled.div`
   background: #ffffff;
   border-radius: 999px;
   padding: 6px 12px;
-  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,.08);
+  cursor: pointer; /* para indicar que é clicável */
+
+  &:hover {
+    background: #f0f0f0;
+  }
+
   @media (max-width: 768px) {
     top: 8px;
     right: 10px;
