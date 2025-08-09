@@ -135,7 +135,20 @@ function Funcionarios() {
   const fetchFuncionarios = async () => {
     try {
       const response = await axios.get(`http://localhost:${REACT_APP_PORT}/api/funcionarios`);
-      setFuncionarios(response.data?.$values || []);
+      const payload = response.data;
+
+      // Normalização do retorno:
+      // - Array direto
+      // - { data: [...] }
+      // - { data: { $values: [...] } }
+      // - { $values: [...] }
+      const lista = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload?.data)
+        ? payload.data
+        : payload?.data?.$values ?? payload?.$values ?? [];
+
+      setFuncionarios(lista);
     } catch (error) {
       console.error("Erro ao buscar funcionários:", error);
     }
@@ -177,14 +190,13 @@ function Funcionarios() {
     if (window.confirm("Tem certeza que deseja excluir?")) {
       try {
         await axios.delete(`http://localhost:${REACT_APP_PORT}/api/funcionarios/${id}`);
-        fetchFuncionarios(); 
+        fetchFuncionarios();
       } catch (error) {
         console.error("Erro ao excluir funcionário:", error);
         alert("Erro ao excluir funcionário.");
       }
     }
   };
-
 
   const startIndex = (page - 1) * rowsPerPage;
   const paginated = funcionarios.slice(startIndex, startIndex + rowsPerPage);

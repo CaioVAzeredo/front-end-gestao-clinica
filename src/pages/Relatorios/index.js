@@ -17,7 +17,7 @@ const Container = styled.div`
     background: #fff;
     border-radius: 8px;
     padding: 20px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   }
 
   .kpi {
@@ -103,20 +103,31 @@ function Relatorios() {
 
   useEffect(() => {
     const fetchDados = async () => {
-      const agendamentos = await fetch(`http://localhost:${REACT_APP_PORT}/api/agendamentos`)
-        .then((res) => res.json());
-      const clientes = await fetch(`http://localhost:${REACT_APP_PORT}/api/clientes`)
-        .then((res) => res.json());
-      const servicos = await fetch(`http://localhost:${REACT_APP_PORT}/api/servicos`)
-        .then((res) => res.json());
+      const agResp = await fetch(`http://localhost:${REACT_APP_PORT}/api/agendamentos`).then((res) => res.json());
+      const cliResp = await fetch(`http://localhost:${REACT_APP_PORT}/api/clientes`).then((res) => res.json());
+      const srvResp = await fetch(`http://localhost:${REACT_APP_PORT}/api/servicos`).then((res) => res.json());
 
-      const totalAtendimentos = agendamentos.data.$values.length;
-      const totalClientes = clientes.data.$values.length;
-      const listaServicos = servicos.data.$values;
+      // Normalização robusta para múltiplos formatos
+      const toList = (payload) =>
+        Array.isArray(payload?.data)
+          ? payload.data
+          : Array.isArray(payload)
+          ? payload
+          : (payload?.data?.$values ?? payload?.$values ?? []);
 
-      const receita = agendamentos.data.$values.reduce((acc, ag) => acc + (ag.servico?.preco || 0), 0);
-      const compareceram = agendamentos.data.$values.filter((a) => a.statusAgenda === "HorarioMarcado").length;
-      const taxaComparecimento = ((compareceram / totalAtendimentos) * 100).toFixed(1);
+      const agList = toList(agResp);
+      const cliList = toList(cliResp);
+      const srvList = toList(srvResp);
+
+      const totalAtendimentos = agList.length;
+      const totalClientes = cliList.length;
+      const listaServicos = srvList;
+
+      const receita = agList.reduce((acc, ag) => acc + (ag?.servico?.preco || 0), 0);
+      const compareceram = agList.filter((a) => a.statusAgenda === "HorarioMarcado").length;
+      const taxaComparecimento = totalAtendimentos
+        ? ((compareceram / totalAtendimentos) * 100).toFixed(1)
+        : "0.0";
 
       setRelatorio({
         totalAtendimentos,
@@ -153,7 +164,7 @@ function Relatorios() {
             {relatorio.servicos.map((s, i) => (
               <div key={s.idServico} className="service-item">
                 <span>{i + 1}. {s.nomeServico}</span>
-                <span>R$ {s.preco.toFixed(2)}</span>
+                <span>R$ {Number(s.preco).toFixed(2)}</span>
               </div>
             ))}
           </div>

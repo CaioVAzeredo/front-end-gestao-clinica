@@ -47,7 +47,7 @@ const ModalContent = styled.div`
   .erro { color: red; font-size: 12px; margin-top: -4px; margin-bottom: 6px; }
 `;
 
-function ModalNovoAtendimento({ onClose }) {
+function ModalNovoAtendimento({ onCreate, onClose }) {
   const [atendimento, setAtendimento] = useState({
     clienteId: "",
     servicoId: "",
@@ -70,11 +70,14 @@ function ModalNovoAtendimento({ onClose }) {
         const resServicos = await fetch(`http://localhost:${REACT_APP_PORT}/api/servicos`).then(r => r.json());
         const resFuncionarios = await fetch(`http://localhost:${REACT_APP_PORT}/api/funcionarios`).then(r => r.json());
 
-        setClientes(resClientes?.data?.$values ?? []);
-        setServicos(resServicos?.data?.$values ?? []);
-        setFuncionarios(resFuncionarios?.$values ?? []);
+        setClientes(resClientes?.data ?? []);
+        setServicos(resServicos?.data ?? []);
+        setFuncionarios(resFuncionarios ?? []);
       } catch (error) {
         console.error("Erro ao carregar dados:", error);
+        setClientes([]);
+        setServicos([]);
+        setFuncionarios([]);
       }
     }
     fetchData();
@@ -116,6 +119,7 @@ function ModalNovoAtendimento({ onClose }) {
         body: JSON.stringify(atendimento)
       });
       alert("Atendimento cadastrado com sucesso!");
+      onCreate();
       onClose();
     } catch (error) {
       console.error("Erro ao cadastrar atendimento", error);
