@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import FullCalendar from '@fullcalendar/react'
 import dayGridPlugin from '@fullcalendar/daygrid'
+import styled from "styled-components";
 import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"
@@ -8,6 +9,19 @@ import ModalEditarAgendamento from "../../components/ModalEditarAgendamento"
 import ModalNovoAtendimento from "../../components/ModalNovoAtendimento";
 
 const REACT_APP_PORT = process.env.REACT_APP_PORT;
+const Container = styled.div`
+  .btn {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+
+  .btn-novo {
+    background: #00a884;
+    color: white;
+  }
+`;
 
 // Helpers
 function addMinutes(date, minutes) {
@@ -237,6 +251,7 @@ export default function Agenda() {
   };
 
   return (
+    <Container>
     <div className="space-y-8">
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -249,7 +264,7 @@ export default function Agenda() {
         
 
         <div className="actions">
-          <button onClick={() => setShowModalAtendimento(true)}>Agendar Atendimento</button>
+          <button className='btn btn-novo' onClick={() => setShowModalAtendimento(true)}>Agendar Atendimento</button>
         </div>
       </div>
 
@@ -307,5 +322,6 @@ export default function Agenda() {
       />
       {showModalAtendimento && <ModalNovoAtendimento onCreate={() => setAtualizarDados(true)} onClose={() => setShowModalAtendimento(false)} />}
     </div>
+    </Container>
   )
 }
