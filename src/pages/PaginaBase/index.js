@@ -130,7 +130,8 @@ const UserBadge = styled.div`
   background: #ffffff;
   border-radius: 999px;
   padding: 6px 12px;
-  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,.08);
+
   @media (max-width: 768px) {
     top: 8px;
     right: 10px;
@@ -199,11 +200,13 @@ function PaginaBase() {
   const [showSidebarMobile, setShowSidebarMobile] = useState(false);
   const [token, setToken] = useState(null);
 
+  // pega o nome salvo (ajuste a chave se precisar)
   const nomeUsuario =
     localStorage.getItem("nome") ||
     localStorage.getItem("usuarioNome") ||
     "Usuário";
 
+  // gera iniciais
   const getInitials = (nome) => {
     if (!nome || typeof nome !== "string") return "U";
     const parts = nome.trim().split(/\s+/).filter(Boolean);
@@ -259,6 +262,7 @@ function PaginaBase() {
 
   return (
     <Layout>
+      {/* Header original, sem precisar mexer nele */}
       <Header
         titulo={titulo}
         setPagina={setPagina}
@@ -268,14 +272,8 @@ function PaginaBase() {
         toggleSidebar={handleToggleSidebar}
       />
 
-      {/* Badge do Usuário */}
-      <UserBadge
-        onClick={() => {
-          setPagina("configuracoes");
-          setTitulo("Configurações");
-          setFiltro("configuracoes");
-        }}
-      >
+      {/* Badge do Usuário (fixo no topo direito) */}
+      <UserBadge>
         <Avatar>{iniciais}</Avatar>
         <UserText>
           <span className="name">{nomeUsuario}</span>
