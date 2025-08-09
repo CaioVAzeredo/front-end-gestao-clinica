@@ -5,103 +5,76 @@ const REACT_APP_PORT = process.env.REACT_APP_PORT;
 
 const ModalOverlay = styled.div`
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  top: 0; left: 0; right: 0; bottom: 0;
   background: rgba(0, 0, 0, 0.4);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 999;
-  padding: 20px;
+  display: flex; justify-content: center; align-items: center;
+  z-index: 999; padding: 20px;
 `;
 
 const ModalContent = styled.div`
-  background: #fff;
-  padding: 20px;
-  border-radius: 8px;
-  width: 650px;
-  max-height: 80vh;
-  overflow-y: auto;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  background: #fff; padding: 20px; border-radius: 8px; width: 650px;
+  max-height: 80vh; overflow-y: auto; box-shadow: 0 2px 10px rgba(0,0,0,0.2);
   position: relative;
 
-  h2 {
-    margin-bottom: 20px;
+  h2 { margin-bottom: 20px; }
+  h3 { margin-top: 20px; margin-bottom: 10px; }
+
+  .close-button { position: absolute; top: 10px; right: 10px; background: transparent; border: none; font-size: 20px; cursor: pointer; color: #444; }
+
+  label { display: block; font-size: 14px; margin-bottom: 5px; margin-top: 10px; }
+
+  input, select, textarea {
+    width: 100%; padding: 8px; margin-bottom: 5px;
+    border-radius: 4px; border: 1px solid #ccc;
   }
 
-  h3 {
-    margin-top: 20px;
-    margin-bottom: 10px;
-  }
+  textarea { resize: vertical; }
 
-  .close-button {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background: transparent;
-    border: none;
-    font-size: 20px;
-    cursor: pointer;
-    color: #444;
-  }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
 
-  label {
-    display: block;
-    font-size: 14px;
-    margin-bottom: 5px;
-    margin-top: 10px;
-  }
+  button.cancelar { background: #aaa; }
+  button { background: #009688; color: #fff; padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; }
 
-  input,
-  select,
-  textarea {
-    width: 100%;
-    padding: 8px;
-    margin-bottom: 5px;
-    border-radius: 4px;
-    border: 1px solid #ccc;
-  }
-
-  textarea {
-    resize: vertical;
-  }
-
-  .modal-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    margin-top: 20px;
-  }
-
-  button.cancelar {
-    background: #aaa;
-  }
-
-  button {
-    background: #009688;
-    color: #fff;
-    padding: 10px 15px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-  }
-
-  .erro {
-    color: red;
-    font-size: 12px;
-    margin-top: -4px;
-    margin-bottom: 6px;
-  }
+  .erro { color: red; font-size: 12px; margin-top: -4px; margin-bottom: 6px; }
 `;
 
 function formatPriceForInput(value) {
-  if (value === null || value === undefined || isNaN(value)) {
-    return "";
-  }
+  if (value === null || value === undefined || isNaN(value)) return "";
   return new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2 }).format(value);
 }
+
+// helpers de normalização
+const toArray = (payload) => {
+  if (!payload) return [];
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload.data)) return payload.data;
+  if (Array.isArray(payload?.data?.$values)) return payload.data.$values;
+  if (Array.isArray(payload?.$values)) return payload.$values;
+  return [];
+};
+
+const fetchCategoriasFlex = async () => {
+  const base = `http://localhost:${REACT_APP_PORT}/api`;
+  const urls = [
+    `${base}/categorias`,
+    `${base}/Categorias`,
+    `${base}/categoria`,
+    `${base}/Categoria`,
+  ];
+  for (const url of urls) {
+    try {
+      const res = await fetch(url);
+      if (!res.ok) continue;
+      const json = await res.json().catch(() => ({}));
+      const arr = toArray(json);
+      if (arr.length) return arr;
+      if (Array.isArray(json) && json.length) return json;
+    } catch {
+      // tenta próxima rota
+    }
+  }
+  return [];
+};
 
 function ModalCadastrarServico({ onClose, onSalvou }) {
   const [servico, setServico] = useState({
@@ -119,41 +92,28 @@ function ModalCadastrarServico({ onClose, onSalvou }) {
   useEffect(() => {
     async function buscarCategorias() {
       try {
-        const resp = await fetch(`http://localhost:${REACT_APP_PORT}/api/Categoria`);
-        if (!resp.ok) {
-          throw new Error("Erro ao buscar categorias");
-        }
-        const dados = await resp.json();
-        if (dados && dados.data && dados.data.$values) {
-          setCategorias(dados.data.$values);
-          if (dados.data.$values.length > 0) {
-            setServico((prev) => ({
-              ...prev,
-              categoriaId: dados.data.$values[0].idCategoria,
-            }));
-          }
+        const lista = await fetchCategoriasFlex();
+        setCategorias(lista);
+        // seta categoria padrão se houver e ainda não tiver uma selecionada
+        if (lista.length && !servico.categoriaId) {
+          const firstId = lista[0].idCategoria ?? lista[0].id ?? "";
+          setServico((prev) => ({ ...prev, categoriaId: firstId }));
         }
       } catch (error) {
         console.error("Erro ao carregar categorias:", error);
+        setCategorias([]);
       }
     }
     buscarCategorias();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function validar() {
     const novosErros = {};
-    if (!servico.nomeServico.trim()) {
-      novosErros.nomeServico = "O nome do serviço é obrigatório.";
-    }
-    if (servico.preco <= 0) {
-      novosErros.preco = "O preço deve ser maior que zero.";
-    }
-    if (servico.duracaoEstimada <= 0) {
-      novosErros.duracaoEstimada = "A duração estimada deve ser maior que zero.";
-    }
-    if (!servico.categoriaId) {
-      novosErros.categoriaId = "A categoria é obrigatória.";
-    }
+    if (!servico.nomeServico.trim()) novosErros.nomeServico = "O nome do serviço é obrigatório.";
+    if (servico.preco <= 0) novosErros.preco = "O preço deve ser maior que zero.";
+    if (servico.duracaoEstimada <= 0) novosErros.duracaoEstimada = "A duração estimada deve ser maior que zero.";
+    if (!servico.categoriaId) novosErros.categoriaId = "A categoria é obrigatória.";
     setErros(novosErros);
     return Object.keys(novosErros).length === 0;
   }
@@ -164,17 +124,19 @@ function ModalCadastrarServico({ onClose, onSalvou }) {
 
     setSalvando(true);
     try {
+      // garante que categoriaId seja número, se possível
+      const body = { ...servico, categoriaId: Number(servico.categoriaId) || servico.categoriaId };
       const resp = await fetch(`http://localhost:${REACT_APP_PORT}/api/servicos`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(servico),
+        body: JSON.stringify(body),
       });
       if (!resp.ok) {
         const txt = await resp.text().catch(() => "");
         throw new Error(txt || `Erro HTTP ${resp.status}`);
       }
       alert("Serviço cadastrado com sucesso!");
-      if (typeof onSalvou === "function") onSalvou();
+      onSalvou?.();
       onClose();
     } catch (error) {
       console.error("Erro ao cadastrar serviço", error);
@@ -206,36 +168,22 @@ function ModalCadastrarServico({ onClose, onSalvou }) {
   }
 
   const onOverlayClick = (e) => {
-    // Verifica se o clique foi na própria div de overlay e não em um de seus filhos
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
+    if (e.target === e.currentTarget) onClose();
   };
 
   return (
     <ModalOverlay onMouseDown={onOverlayClick}>
       <ModalContent onMouseDown={(e) => e.stopPropagation()}>
-        <button type="button" className="close-button" onClick={onClose}>
-          ×
-        </button>
+        <button type="button" className="close-button" onClick={onClose}>×</button>
         <h2>Cadastrar Serviço</h2>
 
         <form onSubmit={salvarServico}>
           <label>Nome do Serviço</label>
-          <input
-            name="nomeServico"
-            value={servico.nomeServico}
-            onChange={handleChange}
-          />
+          <input name="nomeServico" value={servico.nomeServico} onChange={handleChange} />
           {erros.nomeServico && <div className="erro">{erros.nomeServico}</div>}
 
           <label>Descrição</label>
-          <textarea
-            name="descricao"
-            rows="3"
-            value={servico.descricao}
-            onChange={handleChange}
-          />
+          <textarea name="descricao" rows="3" value={servico.descricao} onChange={handleChange} />
 
           <label>Preço</label>
           <input
@@ -254,19 +202,13 @@ function ModalCadastrarServico({ onClose, onSalvou }) {
             value={servico.duracaoEstimada}
             onChange={handleChange}
           />
-          {erros.duracaoEstimada && (
-            <div className="erro">{erros.duracaoEstimada}</div>
-          )}
+          {erros.duracaoEstimada && <div className="erro">{erros.duracaoEstimada}</div>}
 
           <label>Categoria</label>
-          <select
-            name="categoriaId"
-            value={servico.categoriaId}
-            onChange={handleChange}
-          >
+          <select name="categoriaId" value={servico.categoriaId} onChange={handleChange}>
             <option value="">Selecione uma categoria...</option>
             {categorias.map((cat) => (
-              <option key={cat.idCategoria} value={cat.idCategoria}>
+              <option key={cat.idCategoria ?? cat.id} value={cat.idCategoria ?? cat.id}>
                 {cat.nomeCategoria}
               </option>
             ))}
@@ -274,12 +216,7 @@ function ModalCadastrarServico({ onClose, onSalvou }) {
           {erros.categoriaId && <div className="erro">{erros.categoriaId}</div>}
 
           <div className="modal-actions">
-            <button
-              type="button"
-              className="cancelar"
-              onClick={onClose}
-              disabled={salvando}
-            >
+            <button type="button" className="cancelar" onClick={onClose} disabled={salvando}>
               Cancelar
             </button>
             <button type="submit" disabled={salvando}>

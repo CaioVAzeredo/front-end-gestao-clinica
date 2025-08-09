@@ -5,111 +5,73 @@ const REACT_APP_PORT = process.env.REACT_APP_PORT;
 
 const ModalOverlay = styled.div`
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  top: 0; left: 0; right: 0; bottom: 0;
   background: rgba(0, 0, 0, 0.4);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 999;
-  padding: 20px;
+  display: flex; justify-content: center; align-items: center;
+  z-index: 999; padding: 20px;
 `;
 
 const ModalContent = styled.div`
-  background: #fff;
-  padding: 20px;
-  border-radius: 8px;
-  width: 650px;
-  max-height: 80vh;
-  overflow-y: auto;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  background: #fff; padding: 20px; border-radius: 8px; width: 650px;
+  max-height: 80vh; overflow-y: auto; box-shadow: 0 2px 10px rgba(0,0,0,0.2);
   position: relative;
 
-  h2 {
-    margin-bottom: 20px;
-  }
-
-  h3 {
-    margin-top: 20px;
-    margin-bottom: 10px;
-  }
-
-  .close-button {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background: transparent;
-    border: none;
-    font-size: 20px;
-    cursor: pointer;
-    color: #444;
-  }
-
-  label {
-    display: block;
-    font-size: 14px;
-    margin-bottom: 5px;
-    margin-top: 10px;
-  }
-
-  input,
-  select,
-  textarea {
-    width: 100%;
-    padding: 8px;
-    margin-bottom: 5px;
-    border-radius: 4px;
-    border: 1px solid #ccc;
-  }
-
-  textarea {
-    resize: vertical;
-  }
-
-  .modal-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    margin-top: 20px;
-  }
-
-  button.cancelar {
-    background: #aaa;
-  }
-
-  button {
-    background: #009688;
-    color: #fff;
-    padding: 10px 15px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-  }
-
-  .erro {
-    color: red;
-    font-size: 12px;
-    margin-top: -4px;
-    margin-bottom: 6px;
-  }
+  h2 { margin-bottom: 20px; }
+  h3 { margin-top: 20px; margin-bottom: 10px; }
+  .close-button { position: absolute; top: 10px; right: 10px; background: transparent; border: none; font-size: 20px; cursor: pointer; color: #444; }
+  label { display: block; font-size: 14px; margin-bottom: 5px; margin-top: 10px; }
+  input, select, textarea { width: 100%; padding: 8px; margin-bottom: 5px; border-radius: 4px; border: 1px solid #ccc; }
+  textarea { resize: vertical; }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+  button.cancelar { background: #aaa; }
+  button { background: #009688; color: #fff; padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; }
+  .erro { color: red; font-size: 12px; margin-top: -4px; margin-bottom: 6px; }
 `;
 
 function formatPriceForInput(value) {
-  if (value === null || value === undefined || isNaN(value)) {
-    return "";
-  }
+  if (value === null || value === undefined || isNaN(value)) return "";
   return new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2 }).format(value);
 }
 
+// helpers p/ normalizar payloads diferentes
+const toArray = (payload) => {
+  if (!payload) return [];
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload.data)) return payload.data;
+  if (Array.isArray(payload?.data?.$values)) return payload.data.$values;
+  if (Array.isArray(payload?.$values)) return payload.$values;
+  return [];
+};
+
+const fetchCategoriasFlex = async () => {
+  const base = `http://localhost:${REACT_APP_PORT}/api`;
+  const urls = [
+    `${base}/categorias`,
+    `${base}/Categorias`,
+    `${base}/categoria`,
+    `${base}/Categoria`,
+  ];
+  for (const url of urls) {
+    try {
+      const res = await fetch(url);
+      if (!res.ok) continue;
+      const json = await res.json().catch(() => ({}));
+      const arr = toArray(json);
+      if (arr.length) return arr;
+      if (Array.isArray(json) && json.length) return json;
+    } catch {
+      // tenta próxima rota
+    }
+  }
+  return [];
+};
+
 function ModalAtualizarServico({ onClose, onSalvou, servico }) {
-  // CORREÇÃO: Inicializa o estado do formulário diretamente com os dados da prop
   const [servicoForm, setServicoForm] = useState(() => ({
     ...servico,
     categoriaId: servico?.categoria?.idCategoria || ""
   }));
-  
+
   const [erros, setErros] = useState({});
   const [salvando, setSalvando] = useState(false);
   const [categorias, setCategorias] = useState([]);
@@ -117,7 +79,6 @@ function ModalAtualizarServico({ onClose, onSalvou, servico }) {
   const [duracaoInputValue, setDuracaoInputValue] = useState(false);
 
   useEffect(() => {
-    // CORREÇÃO: Inicializa os flags de input com base no valor inicial do serviço
     if (servico) {
       setServicoForm({
         ...servico,
@@ -131,16 +92,11 @@ function ModalAtualizarServico({ onClose, onSalvou, servico }) {
   useEffect(() => {
     async function buscarCategorias() {
       try {
-        const resp = await fetch(`http://localhost:${REACT_APP_PORT}/api/Categoria`);
-        if (!resp.ok) {
-          throw new Error("Erro ao buscar categorias");
-        }
-        const dados = await resp.json();
-        if (dados && dados.data && dados.data.$values) {
-          setCategorias(dados.data.$values);
-        }
+        const lista = await fetchCategoriasFlex();
+        setCategorias(lista);
       } catch (error) {
         console.error("Erro ao carregar categorias:", error);
+        setCategorias([]);
       }
     }
     buscarCategorias();
@@ -148,18 +104,10 @@ function ModalAtualizarServico({ onClose, onSalvou, servico }) {
 
   function validar() {
     const novosErros = {};
-    if (!servicoForm.nomeServico?.trim()) {
-      novosErros.nomeServico = "O nome do serviço é obrigatório.";
-    }
-    if (servicoForm.preco <= 0) {
-      novosErros.preco = "O preço deve ser maior que zero.";
-    }
-    if (servicoForm.duracaoEstimada <= 0) {
-      novosErros.duracaoEstimada = "A duração estimada deve ser maior que zero.";
-    }
-    if (!servicoForm.categoriaId) {
-      novosErros.categoriaId = "A categoria é obrigatória.";
-    }
+    if (!servicoForm.nomeServico?.trim()) novosErros.nomeServico = "O nome do serviço é obrigatório.";
+    if (servicoForm.preco <= 0) novosErros.preco = "O preço deve ser maior que zero.";
+    if (servicoForm.duracaoEstimada <= 0) novosErros.duracaoEstimada = "A duração estimada deve ser maior que zero.";
+    if (!servicoForm.categoriaId) novosErros.categoriaId = "A categoria é obrigatória.";
     setErros(novosErros);
     return Object.keys(novosErros).length === 0;
   }
@@ -177,7 +125,8 @@ function ModalAtualizarServico({ onClose, onSalvou, servico }) {
         preco: servicoForm.preco,
         duracaoEstimada: servicoForm.duracaoEstimada,
         ativo: servicoForm.ativo,
-        categoriaId: servicoForm.categoriaId,
+        // envia categoriaId como número, quando aplicável
+        categoriaId: Number(servicoForm.categoriaId) || servicoForm.categoriaId,
       };
 
       const resp = await fetch(
@@ -193,7 +142,7 @@ function ModalAtualizarServico({ onClose, onSalvou, servico }) {
         throw new Error(txt || `Erro HTTP ${resp.status}`);
       }
       alert("Serviço atualizado com sucesso!");
-      if (typeof onSalvou === "function") onSalvou();
+      onSalvou?.();
       onClose();
     } catch (error) {
       console.error("Erro ao atualizar serviço", error);
@@ -227,9 +176,7 @@ function ModalAtualizarServico({ onClose, onSalvou, servico }) {
   };
 
   const formatPriceDisplay = (price) => {
-    if (price === 0 && !precoInputValue) {
-      return "";
-    }
+    if (price === 0 && !precoInputValue) return "";
     return new Intl.NumberFormat("pt-BR", {
       style: "currency",
       currency: "BRL",
@@ -238,24 +185,18 @@ function ModalAtualizarServico({ onClose, onSalvou, servico }) {
   };
 
   const formatDuracaoDisplay = (duracao) => {
-    if (duracao === 0 && !duracaoInputValue) {
-      return "";
-    }
+    if (duracao === 0 && !duracaoInputValue) return "";
     return duracao;
   };
 
   const onOverlayClick = (e) => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
+    if (e.target === e.currentTarget) onClose();
   };
 
   return (
     <ModalOverlay onMouseDown={onOverlayClick}>
       <ModalContent onMouseDown={(e) => e.stopPropagation()}>
-        <button type="button" className="close-button" onClick={onClose}>
-          ×
-        </button>
+        <button type="button" className="close-button" onClick={onClose}>×</button>
         <h2>Atualizar Serviço</h2>
 
         <form onSubmit={salvarServico}>
@@ -282,9 +223,7 @@ function ModalAtualizarServico({ onClose, onSalvou, servico }) {
             value={formatPriceDisplay(servicoForm.preco)}
             onChange={handlePrecoChange}
             onFocus={() => setPrecoInputValue(true)}
-            onBlur={() => {
-              if (servicoForm.preco === 0) setPrecoInputValue(false);
-            }}
+            onBlur={() => { if (servicoForm.preco === 0) setPrecoInputValue(false); }}
           />
           {erros.preco && <div className="erro">{erros.preco}</div>}
 
@@ -296,9 +235,7 @@ function ModalAtualizarServico({ onClose, onSalvou, servico }) {
             value={formatDuracaoDisplay(servicoForm.duracaoEstimada)}
             onChange={handleDuracaoChange}
             onFocus={() => setDuracaoInputValue(true)}
-            onBlur={() => {
-              if (servicoForm.duracaoEstimada === 0) setDuracaoInputValue(false);
-            }}
+            onBlur={() => { if (servicoForm.duracaoEstimada === 0) setDuracaoInputValue(false); }}
           />
           {erros.duracaoEstimada && <div className="erro">{erros.duracaoEstimada}</div>}
 
@@ -310,7 +247,7 @@ function ModalAtualizarServico({ onClose, onSalvou, servico }) {
           >
             <option value="">Selecione uma categoria...</option>
             {categorias.map((cat) => (
-              <option key={cat.idCategoria} value={cat.idCategoria}>
+              <option key={cat.idCategoria ?? cat.id} value={cat.idCategoria ?? cat.id}>
                 {cat.nomeCategoria}
               </option>
             ))}
