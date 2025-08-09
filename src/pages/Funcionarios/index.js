@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import styled from "styled-components";
+import ModalCadastrarFuncionario from "../../components/ModalCadastrarFuncionario";
+import ModalAtualizarFuncionario from "../../components/ModalAtualizarFuncionario";
 
 const REACT_APP_PORT = process.env.REACT_APP_PORT;
 
@@ -131,15 +133,38 @@ function Funcionarios() {
   const [funcionarios, setFuncionarios] = useState([]);
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [showModalCadastrar, setShowModalCadastrar] = useState(false);
+  const [showModalAtualizar, setShowModalAtualizar] = useState(false);
+  const [funcionarioEditando, setFuncionarioEditando] = useState(null);
+  const [excluindo, setExcluindo] = useState(false);
 
-  const fetchFuncionarios = async () => {
+  /*const fetchFuncionarios = async () => {
     try {
       const response = await axios.get(`http://localhost:${REACT_APP_PORT}/api/funcionarios`);
       setFuncionarios(response.data?.$values || []);
     } catch (error) {
       console.error("Erro ao buscar funcionários:", error);
     }
-  };
+  };*/
+
+  const fetchFuncionarios = async () => {
+  try {
+    const response = await axios.get(`http://localhost:${REACT_APP_PORT}/api/funcionarios`);
+    console.log("Resposta da API:", response.data);
+
+    // Ajuste a atribuição conforme o formato real da resposta
+    if (Array.isArray(response.data)) {
+      setFuncionarios(response.data);
+    } else if (response.data && Array.isArray(response.data.$values)) {
+      setFuncionarios(response.data.$values);
+    } else {
+      setFuncionarios([]);
+      console.warn("Formato da resposta inesperado:", response.data);
+    }
+  } catch (error) {
+    console.error("Erro ao buscar funcionários:", error);
+  }
+};
 
   const handleTogglePerfil = async (func) => {
     const novoPerfil = func.perfil === "admin" ? "funcionario" : "admin";
@@ -171,16 +196,31 @@ function Funcionarios() {
     fetchFuncionarios();
   }, []);
 
-  const handleNovo = () => alert("Abrir modal para criar novo funcionário");
-  const handleEditar = (func) => alert(`Editar funcionário: ${func.nome}`);
+  const handleNovo = () => setShowModalCadastrar(true);
+
+  const handleEditar = (funcionario) => {
+    setFuncionarioEditando(funcionario);
+    setShowModalAtualizar(true);
+  };
+
+
   const handleExcluir = async (id) => {
-    if (window.confirm("Tem certeza que deseja excluir?")) {
+    if (window.confirm("Tem certeza que deseja excluir este funcionario?")) {
+      setExcluindo(true);
       try {
         await axios.delete(`http://localhost:${REACT_APP_PORT}/api/funcionarios/${id}`);
-        fetchFuncionarios(); 
+        // Recarrega a lista
+        await fetchFuncionarios();
+        // Ajusta a página se necessário (ex.: se a página atual ficar vazia)
+        const totalPagesAtualizado = Math.ceil((funcionarios.length - 1) / rowsPerPage);
+        if (page > totalPagesAtualizado) {
+          setPage(Math.max(1, totalPagesAtualizado));
+        }
       } catch (error) {
-        console.error("Erro ao excluir funcionário:", error);
-        alert("Erro ao excluir funcionário.");
+        console.error("Erro ao excluir o funcionário:", error);
+        alert("Erro ao excluir o funcionário. Verifique se o ID existe ou tente novamente.");
+      } finally {
+        setExcluindo(false);
       }
     }
   };
@@ -203,15 +243,31 @@ function Funcionarios() {
           <span>
             {startIndex + 1}-{Math.min(startIndex + rowsPerPage, funcionarios.length)} de {funcionarios.length}
           </span>
-          <select value={rowsPerPage} onChange={(e) => { setRowsPerPage(Number(e.target.value)); setPage(1); }}>
+          <select
+            value={rowsPerPage} 
+            onChange={(e) => { 
+              setRowsPerPage(Number(e.target.value)); 
+              setPage(1); 
+            }}
+          >
             {[5, 10, 25, 50].map((size) => (
-              <option key={size} value={size}>{size}</option>
+              <option key={size} value={size}>
+                {size}
+              </option>
             ))}
           </select>
-          <button disabled={page === 1} onClick={() => setPage(1)}>{"<<"}</button>
-          <button disabled={page === 1} onClick={() => setPage((p) => p - 1)}>{"<"}</button>
-          <button disabled={page === totalPages} onClick={() => setPage((p) => p + 1)}>{">"}</button>
-          <button disabled={page === totalPages} onClick={() => setPage(totalPages)}>{">>"}</button>
+          <button disabled={page === 1} onClick={() => setPage(1)}>
+            {"<<"}
+          </button>
+          <button disabled={page === 1} onClick={() => setPage((p) => p - 1)}>
+            {"<"}
+          </button>
+          <button disabled={page === totalPages} onClick={() => setPage((p) => p + 1)}>
+            {">"}
+          </button>
+          <button disabled={page === totalPages} onClick={() => setPage(totalPages)}>
+            {">>"}
+          </button>
         </div>
 
         <table>
@@ -237,8 +293,18 @@ function Funcionarios() {
                 <td data-label="Perfil">{func.perfil}</td>
                 <td data-label="Status">{func.ativo ? "Ativo" : "Inativo"}</td>
                 <td data-label="Ações">
-                  <button className="btn btn-editar" onClick={() => handleEditar(func)}>Atualizar</button>
-                  <button className="btn btn-excluir" onClick={() => handleExcluir(func.idFuncionario)}>Excluir</button>
+                  <button 
+                    className="btn btn-editar" 
+                    onClick={() => handleEditar(func)}
+                  >
+                    Atualizar
+                  </button>
+                  <button 
+                    className="btn btn-excluir" 
+                    onClick={() => handleExcluir(func.idFuncionario)}
+                  >
+                    Excluir
+                  </button>
                   <button
                     className="btn"
                     style={{ backgroundColor: func.ativo ? "#6c757d" : "#28a745", color: "#fff", marginTop: "6px" }}
@@ -273,6 +339,21 @@ function Funcionarios() {
           <button disabled={page === totalPages} onClick={() => setPage(totalPages)}>{">>"}</button>
         </div>
       </div>
+
+      {showModalCadastrar && (
+        <ModalCadastrarFuncionario onClose={() => setShowModalCadastrar(false)} onSalvou={fetchFuncionarios} />
+      )}
+
+      {showModalAtualizar && (
+        <ModalAtualizarFuncionario
+          funcionario={funcionarioEditando}
+          onClose={() => {
+            setShowModalAtualizar(false);
+            setFuncionarioEditando(null);
+          }}
+          onSalvou={fetchFuncionarios}
+        />
+      )}
     </Container>
   );
 }
