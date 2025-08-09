@@ -1,160 +1,124 @@
+// src/pages/Servicos/index.jsx
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import styled from "styled-components";
+import ModalCadastrarServico from "../../components/ModalCadastrarServico";
+import ModalAtualizarServico from "../../components/ModalAtualizarServico";
+import ModalCadastrarCategoria from "../../components/ModalCadastrarCategoria"; // 1. Importa o novo modal
+
 const REACT_APP_PORT = process.env.REACT_APP_PORT;
 
-const Container = styled.div`
-  padding: 20px;
-  font-family: Arial, sans-serif;
+const formatDuration = (totalMinutes) => {
+  if (totalMinutes === null || totalMinutes === undefined || totalMinutes < 0) {
+    return '0h 00m';
+  }
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes;
 
-  .header {
+  if (hours > 0) {
+    return `${hours}h ${formattedMinutes}m`;
+  } else {
+    return `${formattedMinutes}m`;
+  }
+};
+
+const Container = styled.div`
+  display: flex;
+  height: 100vh;
+
+  .conteudo {
+    flex: 1;
+    padding: 20px;
+  }
+
+  .topo {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
     margin-bottom: 20px;
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-
-  h2 {
-    font-size: 22px;
-  }
-
-  .btn-adicionar {
-    padding: 8px 15px;
-    background: #009688;
-    border: none;
-    border-radius: 5px;
-    color: white;
-    font-size: 14px;
-    cursor: pointer;
-    transition: background 0.3s;
-  }
-
-  .btn-adicionar:hover {
-    background: #00796b;
+    gap: 10px; /* Adiciona um espaçamento entre os botões */
   }
 
   table {
     width: 100%;
     border-collapse: collapse;
-    margin-bottom: 20px;
     background: #fff;
     border-radius: 8px;
     overflow: hidden;
   }
 
-  th,
-  td {
-    text-align: left;
+  table th,
+  table td {
     padding: 12px;
     border-bottom: 1px solid #eee;
-    white-space: normal;      /* Permite quebra de linha */
-    word-wrap: break-word;    /* Quebra palavras longas */
-    overflow-wrap: break-word;
-    max-width: 220px;         /* Limita a largura da célula */
-  }
-
-  th {
-    background: #f4f6f6;
-    font-weight: bold;
-  }
-
-  tr:hover {
-    background: #f9f9f9;
-  }
-
-.categoria {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-weight: bold;
-  padding: 5px 0;    /* menor padding */
-  white-space: normal; /* permitir quebra normal, mas sem verticalizar */
-}
-
-
-.acoes-menu {
-  position: relative;
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-}
-
-.acoes-opcoes {
-  position: fixed;    /* ao invés de absolute */
-  top: var(--pos-top);  /* calculado dinamicamente */
-  left: var(--pos-left);
-  background: #fff;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-  border-radius: 5px;
-  padding: 8px 0;
-  display: flex;
-  flex-direction: column;
-  z-index: 9999;  /* garantir que fica na frente */
-  min-width: 160px;
-}
-
-  .acoes-opcoes button {
-    background: none;
-    border: none;
-    padding: 5px;
     text-align: left;
-    cursor: pointer;
-    color: #333;
   }
 
-  .acoes-opcoes button:hover {
-    background: #f0f0f0;
+  table th {
+    background: #f5f5f5;
   }
 
-  .cadastrados {
-    padding: 10px;
-    background: #f4f6f6;
+  .btn {
+    padding: 8px 12px;
+    border: none;
     border-radius: 5px;
-    font-size: 14px;
-    font-weight: bold;
-    width: fit-content;
-    color: #333;
+    cursor: pointer;
+  }
+
+  .btn-novo {
+    background: #00a884;
+    color: white;
+  }
+
+  .btn-editar {
+    background: #ffc107;
+    margin-right: 8px;
+    color: #000;
+  }
+
+  .btn-excluir {
+    background: #dc3545;
+    color: white;
+  }
+  
+  .btn-categoria {
+    background: #00a884; /* Mesma cor do btn-novo para manter o padrão */
+    color: white;
   }
 
 
-.btn-mais {
-  padding: 0;
-  width: 36px;
-  height: 36px;
-  border: none;
-  background: #009688;
-  color: white;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 20px;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  white-space: nowrap;
-}
+  .paginacao {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin-top: 10px;
+    gap: 10px;
+  }
 
-.btn-mais:hover {
-  background: #00796b;
-}
+  .paginacao select,
+  .paginacao button {
+    padding: 5px 10px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    cursor: pointer;
+  }
 
-  /* --- RESPONSIVIDADE --- */
+  .paginacao span {
+    font-size: 14px;
+  }
+
   @media (max-width: 768px) {
+    table {
+      border: 0;
+    }
+
     table thead {
       display: none;
     }
 
-    table,
-    tbody,
-    tr,
-    td {
+    table tbody tr {
       display: block;
-      width: 100%;
-    }
-
-    tr {
       margin-bottom: 15px;
       background: #fff;
       border-radius: 8px;
@@ -162,155 +126,195 @@ const Container = styled.div`
       padding: 10px;
     }
 
-td {
-  border: none;
-  display: flex;
-  flex-direction: row;  /* impede texto ficar vertical */
-  justify-content: space-between;
-  padding: 8px 5px;
-  font-size: 14px;
-  word-break: break-word;
-  white-space: normal;
-}
-
-td::before {
-  content: attr(data-label);
-  font-weight: bold;
-  text-align: left;
-  margin-right: 10px;
-}
-
-
-
-    td[data-label=""] {
-      justify-content: flex-end;
+    table tbody td {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 5px;
+      font-size: 14px;
+      border: none;
+      word-break: break-word;
     }
 
-.acoes-opcoes {
-  position: fixed;    /* ao invés de absolute */
-  top: var(--pos-top);  /* calculado dinamicamente */
-  left: var(--pos-left);
-  background: #fff;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-  border-radius: 5px;
-  padding: 8px 0;
-  display: flex;
-  flex-direction: column;
-  z-index: 9999;  /* garantir que fica na frente */
-  min-width: 160px;
-}
+    table tbody td::before {
+      content: attr(data-label);
+      font-weight: bold;
+      flex: 1;
+      text-align: left;
+    }
 
+    table tbody td[data-label="Ações"] {
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    table tbody td[data-label="Ações"] button {
+      width: 100%;
+    }
   }
 `;
 
 function Servicos() {
   const [servicos, setServicos] = useState([]);
-  const [menuAtivo, setMenuAtivo] = useState(null);
+  const [page, setPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [showModalCadastrar, setShowModalCadastrar] = useState(false);
+  const [showModalAtualizar, setShowModalAtualizar] = useState(false);
+  const [servicoEditando, setServicoEditando] = useState(null);
+  const [excluindo, setExcluindo] = useState(false);
+  // 2. Novo estado para o modal de categoria
+  const [showModalCategoria, setShowModalCategoria] = useState(false);
+
+  const fetchServicos = async () => {
+    try {
+      const response = await axios.get(`http://localhost:${REACT_APP_PORT}/api/servicos`);
+      setServicos(response.data.data?.$values || response.data || []);
+    } catch (error) {
+      console.error("Erro ao buscar serviços:", error);
+    }
+  };
 
   useEffect(() => {
-    axios
-      .get(`http://localhost:${REACT_APP_PORT}/api/servicos`)
-      .then((response) => {
-        setServicos(response.data.data.$values);
-      })
-      .catch((error) => console.error("Erro ao carregar serviços:", error));
+    fetchServicos();
   }, []);
 
-const handleMenuToggle = (index, event) => {
-  const rect = event.currentTarget.getBoundingClientRect();
-  const menuWidth = 160; // largura mínima definida no CSS do menu
-  const spaceRight = window.innerWidth - rect.right;
+  const handleNovo = () => setShowModalCadastrar(true);
 
-  let left;
-  // se não houver espaço à direita, abre deslocado para a esquerda
-  if (spaceRight < menuWidth) {
-    left = rect.right - menuWidth;
-  } else {
-    left = rect.left;
-  }
-
-  document.documentElement.style.setProperty('--pos-top', `${rect.bottom + window.scrollY}px`);
-  document.documentElement.style.setProperty('--pos-left', `${left + window.scrollX}px`);
-  setMenuAtivo(menuAtivo === index ? null : index);
-};
-
-
-
-  const handleEditarServico = (servico) =>
-    alert(`Editar serviço: ${servico.nomeServico}`);
-  const handleRemoverServico = (servico) =>
-    alert(`Remover serviço: ${servico.nomeServico}`);
-  const handleEditarCategoria = (servico) =>
-    alert(`Editar categoria: ${servico.categoria.nomeCategoria}`);
-  const handleRemoverCategoria = (servico) =>
-    alert(`Remover categoria: ${servico.categoria.nomeCategoria}`);
-  const handleAdicionarServico = () => {
-    alert("Abrir modal para adicionar novo serviço");
+  const handleEditar = (servico) => {
+    setServicoEditando(servico);
+    setShowModalAtualizar(true);
   };
+  
+  // Nova função para abrir o modal de categoria
+  const handleAdicionarCategoria = () => setShowModalCategoria(true);
+
+  const handleExcluir = async (id) => {
+    if (window.confirm("Tem certeza que deseja excluir este serviço?")) {
+      setExcluindo(true);
+      try {
+        await axios.delete(`http://localhost:${REACT_APP_PORT}/api/servicos/${id}`);
+        await fetchServicos();
+        const totalPagesAtualizado = Math.ceil((servicos.length - 1) / rowsPerPage);
+        if (page > totalPagesAtualizado) {
+          setPage(Math.max(1, totalPagesAtualizado));
+        }
+      } catch (error) {
+        console.error("Erro ao excluir serviço:", error);
+        alert("Erro ao excluir serviço. Verifique se o ID existe ou tente novamente.");
+      } finally {
+        setExcluindo(false);
+      }
+    }
+  };
+
+  const startIndex = (page - 1) * rowsPerPage;
+  const paginatedServicos = servicos.slice(startIndex, startIndex + rowsPerPage);
+  const totalPages = Math.ceil(servicos.length / rowsPerPage);
 
   return (
     <Container>
-      <div className="header">
-        <h2>Serviços</h2>
-        <button className="btn-adicionar" onClick={handleAdicionarServico}>
-          + Adicionar Serviço
-        </button>
-      </div>
+      <div className="conteudo">
+        <div className="topo">
+          <button className="btn btn-novo" onClick={handleNovo}>
+            + Novo Serviço
+          </button>
+          <button className="btn btn-novo btn-categoria" onClick={handleAdicionarCategoria}>
+            + Nova Categoria
+          </button>
+        </div>
 
-      <table>
-        <thead>
-          <tr>
-            <th>Categoria</th>
-            <th>Serviço</th>
-            <th>Duração</th>
-            <th>Preço</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {servicos.map((servico, index) => (
-            <tr key={servico.idServico}>
-              <td data-label="Categoria" className="categoria">
-                <span style={{ color: "#009688" }}>●</span>{" "}
-                {servico.categoria.nomeCategoria}
-              </td>
-              <td data-label="Serviço">{servico.nomeServico}</td>
-              <td data-label="Duração">{servico.duracaoEstimada}m</td>
-              <td data-label="Preço">R$ {servico.preco.toFixed(2)}</td>
-              <td data-label="">
-                <div className="acoes-menu">
-                  <button
-                    className="btn-mais"
-                    onClick={(e) => handleMenuToggle(index, e)}>
-                    ⋮
-                  </button>
+        <div className="paginacao">
+          <span>
+            {startIndex + 1}-{Math.min(startIndex + rowsPerPage, servicos.length)} de {servicos.length}
+          </span>
+          <select
+            value={rowsPerPage}
+            onChange={(e) => {
+              setRowsPerPage(Number(e.target.value));
+              setPage(1);
+            }}
+          >
+            {[5, 10, 25, 50].map((size) => (
+              <option key={size} value={size}>
+                {size}
+              </option>
+            ))}
+          </select>
+          <button disabled={page === 1 || excluindo} onClick={() => setPage(1)}>
+            {"<<"}
+          </button>
+          <button disabled={page === 1 || excluindo} onClick={() => setPage((p) => p - 1)}>
+            {"<"}
+          </button>
+          <button disabled={page === totalPages || excluindo} onClick={() => setPage((p) => p + 1)}>
+            {">"}
+          </button>
+          <button disabled={page === totalPages || excluindo} onClick={() => setPage(totalPages)}>
+            {">>"}
+          </button>
+        </div>
 
-                  {menuAtivo === index && (
-                    <div className="acoes-opcoes">
-                      <button onClick={() => handleEditarServico(servico)}>
-                        Editar serviço
-                      </button>
-                      <button onClick={() => handleRemoverServico(servico)}>
-                        Remover serviço
-                      </button>
-                      <button onClick={() => handleEditarCategoria(servico)}>
-                        Editar categoria
-                      </button>
-                      <button onClick={() => handleRemoverCategoria(servico)}>
-                        Remover categoria
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </td>
+        <table>
+          <thead>
+            <tr>
+              <th>Categoria</th>
+              <th>Serviço</th>
+              <th>Duração</th>
+              <th>Preço</th>
+              <th>Ações</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-
-      <div className="cadastrados">
-        Serviços cadastrados: {servicos.length}
+          </thead>
+          <tbody>
+            {paginatedServicos.map((servico) => (
+              <tr key={servico.idServico}>
+                <td data-label="Categoria">{servico.categoria?.nomeCategoria || "Sem categoria"}</td>
+                <td data-label="Serviço">{servico.nomeServico}</td>
+                <td data-label="Duração">{formatDuration(servico.duracaoEstimada)}</td>
+                <td data-label="Preço">R$ {servico.preco?.toFixed(2)}</td>
+                <td data-label="Ações">
+                  <button
+                    type="button"
+                    className="btn btn-editar"
+                    onClick={() => handleEditar(servico)}
+                    disabled={excluindo}
+                  >
+                    Atualizar
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-excluir"
+                    onClick={() => handleExcluir(servico.idServico)}
+                    disabled={excluindo}
+                  >
+                    {excluindo ? "Excluindo..." : "Excluir"}
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
+
+      {showModalCadastrar && (
+        <ModalCadastrarServico onClose={() => setShowModalCadastrar(false)} onSalvou={fetchServicos} />
+      )}
+
+      {showModalAtualizar && (
+        <ModalAtualizarServico
+          servico={servicoEditando}
+          onClose={() => {
+            setShowModalAtualizar(false);
+            setServicoEditando(null);
+          }}
+          onSalvou={fetchServicos}
+        />
+      )}
+
+      {showModalCategoria && (
+        <ModalCadastrarCategoria
+          onClose={() => setShowModalCategoria(false)}
+          onSalvou={fetchServicos}
+        />
+      )}
     </Container>
   );
 }
