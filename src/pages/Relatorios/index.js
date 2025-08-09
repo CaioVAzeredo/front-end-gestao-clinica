@@ -235,6 +235,17 @@ const Container = styled.div`
 
 const API_BASE_URL = `http://localhost:${process.env.REACT_APP_PORT}/api`;
 
+
+
+const maskPhoneBR = (tel = "") => {
+  const d = String(tel).replace(/\D/g, "");
+  if (d.length <= 10) return d.replace(/(\d{2})(\d{4})(\d{0,4})/, "($1) $2-$3");
+  return d.replace(/(\d{2})(\d{5})(\d{0,4})/, "($1) $2-$3");
+};
+
+const maskCPF = (cpf = "") =>
+  String(cpf).replace(/\D/g, "").replace(/(\d{3})(\d{3})(\d{3})(\d{0,2}).*/, "$1.$2.$3-$4");
+
 function Relatorios() {
   const [allData, setAllData] = useState({
     agendamentos: [],
@@ -274,8 +285,8 @@ function Relatorios() {
         Array.isArray(payload?.data)
           ? payload.data
           : Array.isArray(payload)
-          ? payload
-          : payload?.$values || [];
+            ? payload
+            : payload?.$values || [];
 
       setAllData({
         agendamentos: toList(agResp),
@@ -291,48 +302,51 @@ function Relatorios() {
     }
   }, []);
 
-  const servicosInfoMap = useMemo(() => 
+  const servicosInfoMap = useMemo(() =>
     allData.servicos.reduce((map, srv) => {
       map[srv.idServico] = srv;
       return map;
     }, {}),
-  [allData.servicos]);
+    [allData.servicos]);
 
-  const funcionariosInfoMap = useMemo(() => 
+  const funcionariosInfoMap = useMemo(() =>
     allData.funcionarios.reduce((map, func) => {
-      map[func.idFuncionario] = func;
+      map[String(func.idFuncionario)] = func; // chave sempre string
       return map;
     }, {}),
-  [allData.funcionarios]);
+    [allData.funcionarios]);
+
 
   const processAllData = useCallback(() => {
-    if (!allData.agendamentos.length) {
-      return;
-    }
-
     const { agendamentos, clientes } = allData;
 
-    // Como não há filtro, usamos todos os agendamentos.
-    const agendamentosTotais = agendamentos;
-
+    // Contagens baseadas nos agendamentos (se existir)
+    const agendamentosTotais = agendamentos || [];
     const totalAtendimentos = agendamentosTotais.length;
+
     const compareceram = agendamentosTotais.filter((a) => a.statusAgenda === "HorarioMarcado").length;
     const cancelados = agendamentosTotais.filter((a) => a.statusAgenda === "Cancelado").length;
     const taxaComparecimento = totalAtendimentos ? ((compareceram / totalAtendimentos) * 100).toFixed(1) : "0.0";
     const taxaCancelamento = totalAtendimentos ? ((cancelados / totalAtendimentos) * 100).toFixed(1) : "0.0";
-    
+
     const servicoContagem = {};
     const funcionarioContagem = {};
 
     agendamentosTotais.forEach((ag) => {
-      if (ag.servicoId) {
-        servicoContagem[ag.servicoId] = (servicoContagem[ag.servicoId] || 0) + 1;
+      const sid = ag.servicoId ?? ag.idServico ?? ag.servico?.idServico;
+      if (sid != null) {
+        const key = String(sid);
+        servicoContagem[key] = (servicoContagem[key] || 0) + 1;
       }
-      if (ag.funcionarioId) {
-        funcionarioContagem[ag.funcionarioId] = (funcionarioContagem[ag.funcionarioId] || 0) + 1;
+
+      const fid = ag.funcionarioId ?? ag.idFuncionario ?? ag.funcionario?.idFuncionario;
+      if (fid != null) {
+        const key = String(fid);
+        funcionarioContagem[key] = (funcionarioContagem[key] || 0) + 1;
       }
     });
 
+    // Serviços populares (se houver agendamentos); senão fica vazio
     const servicosPopulares = Object.entries(servicoContagem)
       .map(([id, contagem]) => ({
         id,
@@ -342,7 +356,9 @@ function Relatorios() {
       .sort((a, b) => b.contagem - a.contagem)
       .slice(0, 5);
 
-    const funcionariosProdutivos = Object.entries(funcionarioContagem)
+    // Funcionários produtivos com fallback:
+    // se não houver contagem (sem agendamentos), lista todos com contagem 0
+    let funcionariosProdutivos = Object.entries(funcionarioContagem)
       .map(([id, contagem]) => ({
         id,
         nome: funcionariosInfoMap[id]?.nome || "Funcionário Desconhecido",
@@ -350,26 +366,40 @@ function Relatorios() {
       }))
       .sort((a, b) => b.contagem - a.contagem)
       .slice(0, 5);
-      
+
+    if (funcionariosProdutivos.length === 0) {
+      funcionariosProdutivos = (allData.funcionarios || [])
+        .map((f) => ({
+          id: String(f.idFuncionario),
+          nome: f.nome || "Funcionário",
+          contagem: 0,
+        }))
+        .sort((a, b) => a.nome.localeCompare(b.nome))
+        .slice(0, 5);
+    }
+
     // Indicadores de Cliente Globais
-    const totalClientes = clientes.length;
-    const clientesAtivos = clientes.filter((c) => c.ativo).length;
+    const totalClientes = (clientes || []).length;
+    const clientesAtivos = (clientes || []).filter((c) => c.ativo).length;
     const clientesInativos = totalClientes - clientesAtivos;
 
     // Gráfico de Ativos vs Inativos
     const clientesPorStatus = [
       { status: "Ativos", count: clientesAtivos, color: "#00a884" },
-      { status: "Inativos", count: clientesInativos, color: "#6c757d" }
+      { status: "Inativos", count: clientesInativos, color: "#6c757d" },
     ];
     const maxClientesStatus = Math.max(clientesAtivos, clientesInativos, 1);
 
+    // Distribuição semanal (contagem por dia da semana)
     const diasSemana = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
-    const atendimentosPorDia = diasSemana.map((dia, index) => {
-      const count = agendamentosTotais.filter((ag) => new Date(ag.dataHoraInicio).getDay() === index).length;
-      return { dia, count };
+    const atendimentosPorDia = diasSemana.map((_, index) => {
+      const count = agendamentosTotais.filter(
+        (ag) => new Date(ag.dataHoraInicio).getDay() === index
+      ).length;
+      return { dia: diasSemana[index], count };
     });
     const maxAtendimentos = Math.max(...atendimentosPorDia.map((d) => d.count), 1);
-    
+
     setRelatorio({
       totalAtendimentos,
       taxaComparecimento,
@@ -385,6 +415,7 @@ function Relatorios() {
       maxAtendimentos,
     });
   }, [allData, servicosInfoMap, funcionariosInfoMap]);
+
 
   useEffect(() => {
     fetchAllData();
@@ -427,7 +458,7 @@ function Relatorios() {
           Funcionários
         </button>
       </div>
-      
+
       <div className={`tab-content ${activeTab === "atendimento" ? "active" : ""}`}>
         <div className="grid">
           <div className="card">
@@ -467,7 +498,7 @@ function Relatorios() {
           </div>
         </div>
       </div>
-      
+
       <div className={`tab-content ${activeTab === "cliente" ? "active" : ""}`}>
         <div className="grid">
           <div className="card">
@@ -480,7 +511,7 @@ function Relatorios() {
               <span className="label">Clientes Ativos</span>
               <span className="value">{relatorio.clientesAtivos}</span>
             </div>
-             <div className="kpi">
+            <div className="kpi">
               <span className="label">Clientes Inativos</span>
               <span className="value">{relatorio.clientesInativos}</span>
             </div>
@@ -505,7 +536,7 @@ function Relatorios() {
           </div>
         </div>
       </div>
-      
+
       <div className={`tab-content ${activeTab === "servicos" ? "active" : ""}`}>
         <div className="grid">
           <div className="card">
@@ -521,23 +552,52 @@ function Relatorios() {
           </div>
         </div>
       </div>
-      
+
       <div className={`tab-content ${activeTab === "funcionarios" ? "active" : ""}`}>
         <div className="grid">
           <div className="card">
             <div className="card-title">Funcionários Mais Produtivos (Geral)</div>
             <div className="professionals-list">
-              {relatorio.funcionarios.length > 0 ? relatorio.funcionarios.map((funcionario, index) => (
-                <div key={funcionario.id} className="list-item">
-                  <span>{index + 1}. {funcionario.nome}</span>
-                  <span>{funcionario.contagem} atendimentos</span>
-                </div>
-              )) : <p>Nenhum atendimento de funcionário registrado.</p>}
+              {relatorio.funcionarios.length > 0 ? (
+                relatorio.funcionarios.map((f, index) => {
+                  const info = funcionariosInfoMap[String(f.id)] || {};
+                  const nome = info.nome || "Funcionário Desconhecido";
+                  const perfil = info.perfil || "—";
+                  const email = info.email || "—";
+                  const telefone = info.telefone ? maskPhoneBR(info.telefone) : "—";
+                  const cpf = info.cpf ? maskCPF(info.cpf) : "—";
+
+                  return (
+                    <div
+                      key={f.id}
+                      className="list-item"
+                      style={{ flexDirection: "column", alignItems: "flex-start", gap: 4 }}
+                    >
+                      <div style={{ width: "100%", display: "flex", justifyContent: "space-between" }}>
+                        <span>
+                          {index + 1}. {nome} — {perfil}
+                        </span>
+                        <span>{f.contagem} atendimentos</span>
+                      </div>
+
+                      <div style={{ fontSize: 13, color: "#555" }}>
+                        <div><strong>E-mail:</strong> {email}</div>
+                        <div><strong>Telefone:</strong> {telefone}</div>
+                        <div><strong>CPF:</strong> {cpf}</div>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <p>Nenhum funcionário encontrado.</p>
+              )}
             </div>
           </div>
         </div>
       </div>
-      
+
+
+
       <div className="actions">
         <button onClick={handlePrint}>
           <span role="img" aria-label="Impressora">🖨️</span> Imprimir Relatório
