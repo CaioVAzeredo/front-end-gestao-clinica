@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import styled from "styled-components";
+
 const REACT_APP_PORT = process.env.REACT_APP_PORT;
 
 const ModalOverlay = styled.div`
@@ -8,88 +9,139 @@ const ModalOverlay = styled.div`
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.6); /* Opacidade refinada para profundidade */
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 999;
-  padding: 20px;
+  z-index: 1000;
+  padding: 10px;
+  transition: opacity 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); /* Animação suave */
+  opacity: ${({ isOpen }) => (isOpen ? 1 : 0)};
 `;
 
 const ModalContent = styled.div`
-  background: #fff;
-  padding: 20px;
-  border-radius: 8px;
-  width: 650px;
+  background: linear-gradient(145deg, #ffffff, #f9f9f9); /* Gradiente sutil para elegância */
+  padding: 24px;
+  border-radius: 16px; /* Bordas mais refinadas */
+  width: 100%;
+  max-width: 40vw; /* Mais compacto, evitando extensão */
   max-height: 80vh;
   overflow-y: auto;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), 0 4px 16px rgba(0, 0, 0, 0.1); /* Sombras rebuscadas com camadas */
   position: relative;
+  animation: fadeInScale 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 
-  h2 {
-    margin-bottom: 20px;
+  @keyframes fadeInScale {
+    from { transform: scale(0.95); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  /* Responsividade: Empilha campos em mobile */
+  @media (max-width: 768px) {
+    padding: 16px;
+    max-width: 95%;
+    .form-row, .address-grid { display: block; }
+  }
+
+  h2, h3 {
+    margin-bottom: 12px;
+    font-family: 'Roboto', sans-serif; /* Tipografia refinada (importe via CSS) */
+    font-weight: 500;
+    color: #00796b; /* Cor temática */
   }
 
   .close-button {
     position: absolute;
-    top: 10px;
-    right: 10px;
+    top: 12px;
+    right: 12px;
     background: transparent;
     border: none;
-    font-size: 20px;
+    font-size: 26px;
     cursor: pointer;
-    color: #444;
+    color: #757575;
+    transition: color 0.2s, transform 0.2s;
+    &:hover { color: #424242; transform: scale(1.1); }
   }
 
   label {
     display: block;
-    font-size: 14px;
-    margin-bottom: 5px;
-    margin-top: 10px;
+    font-size: 13px;
+    margin-bottom: 4px;
+    margin-top: 8px;
+    font-weight: 500;
+    color: #424242;
   }
 
   input,
-  select {
+  select,
+  textarea {
     width: 100%;
-    padding: 8px;
-    margin-bottom: 5px;
-    border-radius: 4px;
-    border: 1px solid #ccc;
+    max-width: 300px; /* Limite para evitar inputs extensos */
+    padding: 10px 12px;
+    margin-bottom: 6px;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    font-size: 15px;
+    background: #fff;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    &:focus { border-color: #009688; box-shadow: 0 0 0 2px rgba(0, 150, 136, 0.2); }
   }
 
   textarea {
-    width: 100%;
-    padding: 8px;
-    border-radius: 4px;
-    border: 1px solid #ccc;
     resize: vertical;
+    min-height: 70px;
+    max-width: 100%; /* Controle de extensão */
+  }
+
+  .form-row {
+    display: flex;
+    gap: 16px;
+    > div { flex: 1; min-width: 0; }
+  }
+
+  .address-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 16px;
   }
 
   .modal-actions {
     display: flex;
     justify-content: flex-end;
-    gap: 10px;
+    gap: 12px;
     margin-top: 20px;
   }
 
-  button.cancelar {
-    background: #aaa;
+  button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 500;
+    transition: background 0.2s, transform 0.1s;
+    &:active { transform: scale(0.98); }
   }
 
-  button {
+  button.cancelar {
+    background: #e0e0e0;
+    color: #424242;
+    &:hover { background: #bdbdbd; }
+  }
+
+  button[type="submit"] {
     background: #009688;
     color: #fff;
-    padding: 10px 15px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
+    &:hover { background: #00796b; }
+    &:disabled { background: #80cbc4; cursor: not-allowed; }
   }
 
   .erro {
-    color: red;
+    color: #d32f2f;
     font-size: 12px;
     margin-top: -4px;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
+    font-style: italic; /* Toque rebuscado */
   }
 `;
 
@@ -112,64 +164,25 @@ function ModalCadastrarCliente({ onClose, onSalvou }) {
   });
   const [erros, setErros] = useState({});
   const [salvando, setSalvando] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
 
   function validar() {
     const novosErros = {};
 
-    // Nome obrigatório
-    if (!cliente.nome.trim()) {
-      novosErros.nome = "O nome é obrigatório.";
-    }
-
-    // Telefone - exatamente 11 dígitos
-    if (!cliente.telefone) {
-      novosErros.telefone = "O telefone é obrigatório.";
-    } else if (cliente.telefone.length !== 11) {
-      novosErros.telefone = "O telefone deve ter exatamente 11 números.";
-    }
-
-    // E-mail válido
-    if (!cliente.email.trim()) {
-      novosErros.email = "O e-mail é obrigatório.";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cliente.email)) {
-      novosErros.email = "E-mail inválido.";
-    }
-
-    // CPF - exatamente 11 dígitos
-    if (!cliente.cpf) {
-      novosErros.cpf = "O CPF é obrigatório.";
-    } else if (cliente.cpf.length !== 11) {
-      novosErros.cpf = "O CPF deve ter exatamente 11 números.";
-    }
-
-    // Logradouro obrigatório
-    if (!cliente.endereco.logradouro.trim()) {
-      novosErros.logradouro = "O logradouro é obrigatório.";
-    }
-
-    // Número - exatamente 2 caracteres
-    if (!cliente.endereco.numero) {
-      novosErros.numero = "O número é obrigatório.";
-    }
-
-    // Cidade obrigatória
-    if (!cliente.endereco.cidade.trim()) {
-      novosErros.cidade = "A cidade é obrigatória.";
-    }
-
-    // UF - exatamente 2 letras
-    if (!cliente.endereco.uf) {
-      novosErros.uf = "O UF é obrigatório.";
-    } else if (!/^[A-Za-z]{2}$/.test(cliente.endereco.uf)) {
-      novosErros.uf = "O UF deve ter exatamente 2 letras.";
-    }
-
-    // CEP - exatamente 8 números
-    if (!cliente.endereco.cep) {
-      novosErros.cep = "O CEP é obrigatório.";
-    } else if (!/^\d{8}$/.test(cliente.endereco.cep)) {
-      novosErros.cep = "O CEP deve ter exatamente 8 números.";
-    }
+    if (!cliente.nome.trim()) novosErros.nome = "O nome é obrigatório.";
+    if (!cliente.telefone) novosErros.telefone = "O telefone é obrigatório.";
+    else if (cliente.telefone.length !== 11) novosErros.telefone = "O telefone deve ter exatamente 11 números.";
+    if (!cliente.email.trim()) novosErros.email = "O e-mail é obrigatório.";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cliente.email)) novosErros.email = "E-mail inválido.";
+    if (!cliente.cpf) novosErros.cpf = "O CPF é obrigatório.";
+    else if (cliente.cpf.length !== 11) novosErros.cpf = "O CPF deve ter exatamente 11 números.";
+    if (!cliente.endereco.logradouro.trim()) novosErros.logradouro = "O logradouro é obrigatório.";
+    if (!cliente.endereco.numero) novosErros.numero = "O número é obrigatório.";
+    if (!cliente.endereco.cidade.trim()) novosErros.cidade = "A cidade é obrigatória.";
+    if (!cliente.endereco.uf) novosErros.uf = "O UF é obrigatório.";
+    else if (!/^[A-Za-z]{2}$/.test(cliente.endereco.uf)) novosErros.uf = "O UF deve ter exatamente 2 letras.";
+    if (!cliente.endereco.cep) novosErros.cep = "O CEP é obrigatório.";
+    else if (!/^\d{8}$/.test(cliente.endereco.cep)) novosErros.cep = "O CEP deve ter exatamente 8 números.";
 
     setErros(novosErros);
     return Object.keys(novosErros).length === 0;
@@ -186,13 +199,10 @@ function ModalCadastrarCliente({ onClose, onSalvou }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(cliente)
       });
-      if (!resp.ok) {
-        const txt = await resp.text().catch(() => "");
-        throw new Error(txt || `Erro HTTP ${resp.status}`);
-      }
+      if (!resp.ok) throw new Error(await resp.text() || `Erro HTTP ${resp.status}`);
       alert("Cliente cadastrado com sucesso!");
       if (typeof onSalvou === "function") onSalvou();
-      onClose();
+      handleClose();
     } catch (error) {
       console.error("Erro ao cadastrar cliente", error);
       alert("Erro ao cadastrar cliente!");
@@ -209,127 +219,169 @@ function ModalCadastrarCliente({ onClose, onSalvou }) {
     }));
   }
 
+  function handleClose() {
+    setIsOpen(false);
+    setTimeout(onClose, 400); // Espera animação
+  }
+
   return (
-    <ModalOverlay onClick={onClose}>
-      <ModalContent onClick={(e) => e.stopPropagation()}>
-        <button type="button" className="close-button" onClick={onClose}>
+    <ModalOverlay onClick={handleClose} isOpen={isOpen}>
+      <ModalContent onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <button type="button" className="close-button" onClick={handleClose} aria-label="Fechar modal">
           ×
         </button>
-        <h2>Cadastrar Cliente</h2>
+        <h2 id="modal-title">Cadastrar Cliente</h2>
 
         <form onSubmit={salvarCliente}>
-          <label>Nome</label>
+          <label htmlFor="nome">Nome</label>
           <input
+            id="nome"
+            placeholder="Nome completo"
             value={cliente.nome}
             onChange={(e) => setCliente({ ...cliente, nome: e.target.value })}
           />
           {erros.nome && <div className="erro">{erros.nome}</div>}
 
-          <label>Telefone</label>
-          <input
-            value={cliente.telefone}
-            maxLength={11}
-            onChange={(e) =>
-              setCliente({ ...cliente, telefone: e.target.value.replace(/\D/g, "") })
-            }
-          />
-          {erros.telefone && <div className="erro">{erros.telefone}</div>}
+          <div className="form-row">
+            <div>
+              <label htmlFor="telefone">Telefone</label>
+              <input
+                id="telefone"
+                placeholder="11987654321"
+                value={cliente.telefone}
+                maxLength={11}
+                onChange={(e) => setCliente({ ...cliente, telefone: e.target.value.replace(/\D/g, "") })}
+              />
+              {erros.telefone && <div className="erro">{erros.telefone}</div>}
+            </div>
+            <div>
+              <label htmlFor="email">E-mail</label>
+              <input
+                id="email"
+                type="email"
+                placeholder="exemplo@email.com"
+                value={cliente.email}
+                onChange={(e) => setCliente({ ...cliente, email: e.target.value })}
+              />
+              {erros.email && <div className="erro">{erros.email}</div>}
+            </div>
+          </div>
 
-          <label>E-mail</label>
-          <input
-            type="email"
-            value={cliente.email}
-            onChange={(e) => setCliente({ ...cliente, email: e.target.value })}
-          />
-          {erros.email && <div className="erro">{erros.email}</div>}
+          <div className="form-row">
+            <div>
+              <label htmlFor="cpf">CPF</label>
+              <input
+                id="cpf"
+                placeholder="12345678901"
+                value={cliente.cpf}
+                maxLength={11}
+                onChange={(e) => setCliente({ ...cliente, cpf: e.target.value.replace(/\D/g, "") })}
+              />
+              {erros.cpf && <div className="erro">{erros.cpf}</div>}
+            </div>
+            <div>
+              <label htmlFor="ativo">Status</label>
+              <select
+                id="ativo"
+                value={String(cliente.ativo)}
+                onChange={(e) => setCliente({ ...cliente, ativo: e.target.value === "true" })}
+              >
+                <option value="true">Ativo</option>
+                <option value="false">Inativo</option>
+              </select>
+            </div>
+          </div>
 
-          <label>CPF</label>
-          <input
-            value={cliente.cpf}
-            maxLength={11}
-            onChange={(e) =>
-              setCliente({ ...cliente, cpf: e.target.value.replace(/\D/g, "") })
-            }
-          />
-          {erros.cpf && <div className="erro">{erros.cpf}</div>}
-
-          <label>Observações</label>
+          <label htmlFor="observacoes">Observações</label>
           <textarea
-            rows="3"
+            id="observacoes"
+            placeholder="Notas opcionais"
             value={cliente.observacoes}
             onChange={(e) => setCliente({ ...cliente, observacoes: e.target.value })}
           />
 
-          <label>Status</label>
-          <select
-            value={String(cliente.ativo)}
-            onChange={(e) => setCliente({ ...cliente, ativo: e.target.value === "true" })}
-          >
-            <option value="true">Ativo</option>
-            <option value="false">Inativo</option>
-          </select>
-
           <h3>Endereço</h3>
-          <label>Logradouro</label>
-          <input
-            name="logradouro"
-            value={cliente.endereco.logradouro}
-            onChange={handleEnderecoChange}
-          />
-          {erros.logradouro && <div className="erro">{erros.logradouro}</div>}
-
-          <label>Número</label>
-          <input
-            name="numero"
-            maxLength={10000}
-            value={cliente.endereco.numero}
-            onChange={handleEnderecoChange}
-          />
-          {erros.numero && <div className="erro">{erros.numero}</div>}
-
-          <label>Complemento</label>
-          <input
-            name="complemento"
-            value={cliente.endereco.complemento}
-            onChange={handleEnderecoChange}
-          />
-
-          <label>Cidade</label>
-          <input
-            name="cidade"
-            value={cliente.endereco.cidade}
-            onChange={handleEnderecoChange}
-          />
-          {erros.cidade && <div className="erro">{erros.cidade}</div>}
-
-          <label>UF</label>
-          <input
-            name="uf"
-            maxLength={2}
-            value={cliente.endereco.uf}
-            onChange={(e) =>
-              handleEnderecoChange({
-                target: { name: "uf", value: e.target.value.toUpperCase() }
-              })
-            }
-          />
-          {erros.uf && <div className="erro">{erros.uf}</div>}
-
-          <label>CEP</label>
-          <input
-            name="cep"
-            maxLength={8}
-            value={cliente.endereco.cep}
-            onChange={(e) =>
-              handleEnderecoChange({
-                target: { name: "cep", value: e.target.value.replace(/\D/g, "") }
-              })
-            }
-          />
-          {erros.cep && <div className="erro">{erros.cep}</div>}
+          <div className="address-grid">
+            <div>
+              <label htmlFor="logradouro">Logradouro</label>
+              <input
+                id="logradouro"
+                name="logradouro"
+                placeholder="Rua Exemplo"
+                value={cliente.endereco.logradouro}
+                onChange={handleEnderecoChange}
+              />
+              {erros.logradouro && <div className="erro">{erros.logradouro}</div>}
+            </div>
+            <div>
+              <label htmlFor="numero">Número</label>
+              <input
+                id="numero"
+                name="numero"
+                placeholder="123"
+                maxLength={10}
+                value={cliente.endereco.numero}
+                onChange={handleEnderecoChange}
+              />
+              {erros.numero && <div className="erro">{erros.numero}</div>}
+            </div>
+            <div>
+              <label htmlFor="complemento">Complemento</label>
+              <input
+                id="complemento"
+                name="complemento"
+                placeholder="Apt 456 (opcional)"
+                value={cliente.endereco.complemento}
+                onChange={handleEnderecoChange}
+              />
+            </div>
+            <div>
+              <label htmlFor="cidade">Cidade</label>
+              <input
+                id="cidade"
+                name="cidade"
+                placeholder="São Paulo"
+                value={cliente.endereco.cidade}
+                onChange={handleEnderecoChange}
+              />
+              {erros.cidade && <div className="erro">{erros.cidade}</div>}
+            </div>
+            <div>
+              <label htmlFor="uf">UF</label>
+              <input
+                id="uf"
+                name="uf"
+                placeholder="SP"
+                maxLength={2}
+                value={cliente.endereco.uf}
+                onChange={(e) =>
+                  handleEnderecoChange({
+                    target: { name: "uf", value: e.target.value.toUpperCase() }
+                  })
+                }
+              />
+              {erros.uf && <div className="erro">{erros.uf}</div>}
+            </div>
+            <div>
+              <label htmlFor="cep">CEP</label>
+              <input
+                id="cep"
+                name="cep"
+                placeholder="12345678"
+                maxLength={8}
+                value={cliente.endereco.cep}
+                onChange={(e) =>
+                  handleEnderecoChange({
+                    target: { name: "cep", value: e.target.value.replace(/\D/g, "") }
+                  })
+                }
+              />
+              {erros.cep && <div className="erro">{erros.cep}</div>}
+            </div>
+          </div>
 
           <div className="modal-actions">
-            <button type="button" className="cancelar" onClick={onClose} disabled={salvando}>
+            <button type="button" className="cancelar" onClick={handleClose} disabled={salvando}>
               Cancelar
             </button>
             <button type="submit" disabled={salvando}>

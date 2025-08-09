@@ -139,9 +139,7 @@ const UserBadge = styled.div`
   }
 
   @media (max-width: 768px) {
-    top: 8px;
-    right: 10px;
-    padding: 6px 10px;
+display: none;
   }
 `;
 
