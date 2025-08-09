@@ -4,7 +4,7 @@ import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"
-import { Plus, CalendarDays } from "lucide-react"
+import { Plus } from "lucide-react"
 import { Button } from "../../components/ui/button"
 
 const REACT_APP_PORT = process.env.REACT_APP_PORT;
@@ -12,60 +12,51 @@ const REACT_APP_PORT = process.env.REACT_APP_PORT;
 export default function Agenda() {
   const [selectedAppointment, setSelectedAppointment] = useState(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [agendamentos, setAgendamentos] = useState(null);
+  const [events, setEvents] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchDados = async () => {
-      const agendas = await fetch(`http://localhost:${REACT_APP_PORT}/api/agendamentos`).then(res => res.json());
-      setAgendamentos([
-        ...agendas.data.$values
-    ]);
-      console.log(agendamentos, agendas.data.$values);
+      try {
+        const response = await fetch(`http://localhost:${REACT_APP_PORT}/api/agendamentos`);
+        
+        if (!response.ok) {
+          throw new Error('Erro ao buscar os agendamentos.');
+        }
+
+        const data = await response.json();
+        
+        // Mapeia os dados da API para o formato de eventos do FullCalendar
+        const mappedEvents = data.data.$values.map(agendamento => ({
+          id: agendamento.idAgendamento, // Usando o ID do agendamento
+          title: agendamento.cliente.nome + ' - ' + agendamento.servico.nomeServico, // Criando o título do evento
+          start: agendamento.dataHoraInicio, // Data e hora de início
+          end: agendamento.dataHoraFim, // Data e hora de fim
+          backgroundColor: 'hsl(var(--primary) / 0.8)', // Exemplo de cor
+          borderColor: 'hsl(var(--primary))',
+          extendedProps: {
+            patient: agendamento.cliente.nome,
+            service: agendamento.servico.nomeServico,
+            notes: agendamento.observacoes,
+            // Adicione outras propriedades que você possa precisar da API
+          }
+        }));
+
+        setEvents(mappedEvents);
+      } catch (error) {
+        console.error("Falha ao carregar agendamentos:", error);
+        // Opcional: mostrar um erro na UI para o usuário
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     fetchDados();
-  }, []);
-  
-  if (!agendamentos) return <p>Carregando...</p>;
-  console.log(agendamentos);
-
-  // Dados simulados das atendimentos
-  const events = [
-    {
-      id: '1',
-      title: 'Maria Silva - Atendimento Geral',
-      start: '2025-08-06T08:00:00',
-      end: '2025-08-06T08:30:00',
-      backgroundColor: 'hsl(var(--primary) / 0.8)',
-      borderColor: 'hsl(var(--primary))',
-      extendedProps: {
-        patient: "Maria Silva",
-        phone: "(11) 98765-4321",
-        service: "Atendimento Geral",
-        doctor: "Dr. João Santos",
-        status: "confirmada",
-        notes: "Paciente com histórico de hipertensão",
-        address: "Rua das Flores, 123"
-      }
-    },
-    {
-      id: '2',
-      title: 'Carlos Oliveira - Cardiologia',
-      start: '2025-08-06T09:00:00',
-      end: '2025-08-06T09:45:00',
-      backgroundColor: 'hsl(var(--secondary) / 0.8)',
-      borderColor: 'hsl(var(--secondary))',
-      extendedProps: {
-        patient: "Carlos Oliveira",
-        phone: "(11) 91234-5678",
-        service: "Cardiologia",
-        doctor: "Dra. Ana Costa",
-        status: "pendente",
-        notes: "Primeira atendimento - exames de rotina",
-        address: "Av. Principal, 456"
-      }
-    }
-  ]
+  }, []); // O array de dependências vazio garante que o useEffect rode apenas uma vez, na montagem do componente.
+ 
+  if (isLoading) {
+    return <p>Carregando...</p>;
+  }
 
   const handleEventClick = (clickInfo) => {
     setSelectedAppointment({
@@ -77,7 +68,6 @@ export default function Agenda() {
     })
     setIsDialogOpen(true)
   }
-
 
   return (
     <div className="space-y-8">
@@ -117,7 +107,7 @@ export default function Agenda() {
               selectMirror={true}
               dayMaxEvents={true}
               weekends={true}
-              events={events}
+              events={events} // Agora usando o estado "events" populado pela API
               eventClick={handleEventClick}
               height="600px"
               locale="pt-br"
@@ -152,8 +142,6 @@ export default function Agenda() {
           </div>
         </CardContent>
       </Card>
-
-
     </div>
   )
 }
