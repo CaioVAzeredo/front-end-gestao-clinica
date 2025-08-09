@@ -148,6 +148,13 @@ function Dashboard({ setPagina, setTitulo }) {
     setTitulo("Relatórios");
   }
 
+  // Função para buscar o serviço completo com base no idServico
+  const fetchServicoCompleto = async (idServico) => {
+    const response = await fetch(`http://localhost:${REACT_APP_PORT}/api/servicos/${idServico}`);
+    const data = await response.json();
+    return data?.data ?? null; // Retorna os dados do serviço
+  };
+
   async function handleExcluirAgendamento(ag) {
     const id =
       ag?.idAgendamento ?? ag?.id ?? ag?.agendamentoId;
@@ -158,7 +165,6 @@ function Dashboard({ setPagina, setTitulo }) {
     }
 
     if (!window.confirm("Tem certeza que deseja excluir este agendamento?")) return;
-
 
     try {
       const resp = await fetch(
@@ -206,6 +212,13 @@ function Dashboard({ setPagina, setTitulo }) {
         ? funcionarios.data
         : (funcionarios?.data?.$values ?? []);
 
+      const listaServicos = Array.isArray(servicos?.data)
+        ? servicos.data
+        : (servicos?.data?.$values ?? []);
+
+      console.log(listaServicos);  // Exibindo a lista completa de serviços no console
+      console.log('Preço do primeiro serviço:', listaServicos[0]?.preco);  // Exibindo o preço do primeiro serviço
+
       // Cria mapa idFuncionario -> nome
       const mapa = {};
       for (const f of (listaFuncs ?? [])) {
@@ -230,9 +243,23 @@ function Dashboard({ setPagina, setTitulo }) {
         return dc && dc >= seteDiasAtras;
       }).length;
 
-      const receitaMes = (listaAg ?? []).reduce((acc, ag) => acc + (ag.servico?.preco || 0), 0);
+      // Cálculo da receita do mês com dados do serviço completo
+      const receitaMes = await (async () => {
+        let total = 0;
+        for (const ag of listaAg ?? []) {
+          const servicoCompleto = listaServicos.find(
+            servico => servico.idServico === ag.servicoId
+          );
 
-      // Ordena agendamentos por data/hora e pega os próximos 5
+          if (servicoCompleto) {
+            const precoServico = servicoCompleto?.preco || 0;
+            console.log(`Preço do serviço (${servicoCompleto?.nomeServico}): R$ ${precoServico}`);
+            total += precoServico;
+          }
+        }
+        return total;
+      })();
+
       const proximos = [...(listaAg ?? [])]
         .sort((a, b) => new Date(a.dataHoraInicio) - new Date(b.dataHoraInicio))
         .slice(0, 5);
@@ -269,11 +296,7 @@ function Dashboard({ setPagina, setTitulo }) {
           <div className="value">{dados.taxaOcupacao}%</div>
           <div className="positive">+5% vs mês passado</div>
         </div>
-        <div className="card">
-          <div className="title">Receita do Mês</div>
-          <div className="value">R$ {dados.receitaMes.toLocaleString()}</div>
-          <div className="positive">+12% vs mês anterior</div>
-        </div>
+        
       </div>
 
       <div className="card" style={{ marginTop: 20 }}>
@@ -293,7 +316,6 @@ function Dashboard({ setPagina, setTitulo }) {
               const nomeCliente = ag?.cliente?.nome ?? "Sem nome";
               const nomeServico = ag?.servico?.nomeServico ?? "Sem serviço";
 
-              // Resolve nome do funcionário (aninhado ou via mapa pelo funcionarioId)
               const funcNome =
                 ag?.funcionario?.nome
                 ?? (funcMap[ag?.funcionarioId] ?? "Sem funcionário");
@@ -338,7 +360,7 @@ function Dashboard({ setPagina, setTitulo }) {
       </div>
 
       {showModal && <ModalCadastrarCliente onClose={() => setShowModal(false)} />}
-      {showModalAtendimento && <ModalNovoAtendimento onCreate={()=>setAtualizarDados(true)} onClose={() => setShowModalAtendimento(false)} />}
+      {showModalAtendimento && <ModalNovoAtendimento onCreate={() => setAtualizarDados(true)} onClose={() => setShowModalAtendimento(false)} />}
     </Container>
   );
 }
