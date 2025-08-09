@@ -273,18 +273,6 @@ function ModalCadastrarServico({ onClose, onSalvou }) {
           </select>
           {erros.categoriaId && <div className="erro">{erros.categoriaId}</div>}
 
-          <label>Status</label>
-          <select
-            name="ativo"
-            value={String(servico.ativo)}
-            onChange={(e) =>
-              setServico({ ...servico, ativo: e.target.value === "true" })
-            }
-          >
-            <option value="true">Ativo</option>
-            <option value="false">Inativo</option>
-          </select>
-
           <div className="modal-actions">
             <button
               type="button"
