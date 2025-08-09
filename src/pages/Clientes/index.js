@@ -232,35 +232,43 @@ function Clientes() {
             </tr>
           </thead>
           <tbody>
-            {paginatedClientes.map((cliente) => (
-              <tr key={cliente.idCliente}>
-                <td data-label="Cliente">{cliente.nome}</td>
-                <td data-label="Contato">
-                  {cliente.telefone}
-                  <br />
-                  {cliente.email}
-                </td>
-                <td data-label="Status">{cliente.ativo ? "Ativo" : "Inativo"}</td>
-                <td data-label="Ações">
-                  <button
-                    type="button"
-                    className="btn btn-editar"
-                    onClick={() => handleEditar(cliente)}
-                    disabled={excluindo}
-                  >
-                    Atualizar
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-excluir"
-                    onClick={() => handleExcluir(cliente.idCliente)}
-                    disabled={excluindo}
-                  >
-                    {excluindo ? "Excluindo..." : "Excluir"}
-                  </button>
+            {paginatedClientes.length === 0 ? (
+              <tr>
+                <td colSpan="4" style={{ textAlign: "center", padding: "10px", fontStyle: "italic", color: "#777" }}>
+                  Nenhum cliente encontrado
                 </td>
               </tr>
-            ))}
+            ) : (
+              paginatedClientes.map((cliente) => (
+                <tr key={cliente.idCliente}>
+                  <td data-label="Cliente">{cliente.nome}</td>
+                  <td data-label="Contato">
+                    {cliente.telefone}
+                    <br />
+                    {cliente.email}
+                  </td>
+                  <td data-label="Status">{cliente.ativo ? "Ativo" : "Inativo"}</td>
+                  <td data-label="Ações">
+                    <button
+                      type="button"
+                      className="btn btn-editar"
+                      onClick={() => handleEditar(cliente)}
+                      disabled={excluindo}
+                    >
+                      Atualizar
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-excluir"
+                      onClick={() => handleExcluir(cliente.idCliente)}
+                      disabled={excluindo}
+                    >
+                      {excluindo ? "Excluindo..." : "Excluir"}
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
