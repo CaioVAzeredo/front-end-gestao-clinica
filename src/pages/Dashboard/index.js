@@ -143,25 +143,25 @@ function Dashboard({ setPagina, setTitulo }) {
 
       const hoje = new Date().toDateString();
 
-      const atendimentosHoje = agendamentos.data.$values.filter(
+      const atendimentosHoje = agendamentos.data.filter(
         a => new Date(a.dataHoraInicio).toDateString() === hoje
       ).length;
 
       const totalHorariosDisponiveisHoje = 8; 
       const taxaOcupacao = ((atendimentosHoje / totalHorariosDisponiveisHoje) * 100).toFixed(1);
 
-      const clientesNovos = clientes.data.$values.filter(
+      const clientesNovos = clientes.data.filter(
         c => new Date(c.dataCriacao) >= new Date(new Date().setDate(new Date().getDate() - 7))
       ).length;
 
-      const receitaMes = agendamentos.data.$values.reduce((acc, ag) => acc + (ag.servico?.preco || 0), 0);
+      const receitaMes = agendamentos.data.reduce((acc, ag) => acc + (ag.servico?.preco || 0), 0);
 
       setDados({
         atendimentosHoje,
         clientesNovos,
         taxaOcupacao,
         receitaMes,
-        proximos: agendamentos.data.$values.slice(0, 5),
+        proximos: agendamentos.data.slice(0, 5),
       });
     };
 
