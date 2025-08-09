@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useRef } from 'react' // <--- 1. Adicionar useRef
 import FullCalendar from '@fullcalendar/react'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import styled from "styled-components";
@@ -22,6 +22,26 @@ const Container = styled.div`
     color: white;
   }
 `;
+
+// ==================================================================
+// 2. Hook customizado para detectar se a tela é de dispositivo móvel
+// ==================================================================
+const useIsMobile = (breakpoint = 768) => {
+  const [isMobile, setIsMobile] = useState(window.innerWidth < breakpoint);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < breakpoint);
+    };
+
+    window.addEventListener('resize', handleResize);
+    // Cleanup
+    return () => window.removeEventListener('resize', handleResize);
+  }, [breakpoint]);
+
+  return isMobile;
+};
+
 
 // Helpers
 function addMinutes(date, minutes) {
@@ -56,7 +76,13 @@ export default function Agenda() {
   const [selected, setSelected] = useState(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [showModalAtendimento, setShowModalAtendimento] = useState(false);
-    const [atualizarDados, setAtualizarDados] = useState(false);
+  const [atualizarDados, setAtualizarDados] = useState(false);
+  
+  // ==================================================================
+  // 3. Usar o hook e a referência do calendário
+  // ==================================================================
+  const isMobile = useIsMobile();
+  const calendarRef = useRef(null);
 
   // Carrega dados
   useEffect(() => {
@@ -78,6 +104,18 @@ export default function Agenda() {
     };
     fetchDados();
   }, []);
+  
+  // ==================================================================
+  // 4. useEffect para mudar a view do calendário programaticamente
+  // ==================================================================
+  useEffect(() => {
+    if (calendarRef.current) {
+        const calendarApi = calendarRef.current.getApi();
+        // Muda para 'timeGridDay' em mobile, e 'timeGridWeek' em desktop
+        calendarApi.changeView(isMobile ? 'timeGridDay' : 'timeGridWeek');
+    }
+  }, [isMobile]); // Executa sempre que o valor de isMobile mudar
+
 
   // Cores por status
   const statusColors = {
@@ -276,13 +314,21 @@ export default function Agenda() {
         <CardContent>
           <div className="calendar-wrapper">
             <FullCalendar
+              // ==================================================================
+              // 5. Aplicar as props dinâmicas
+              // ==================================================================
+              ref={calendarRef}
               plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-              headerToolbar={{
-                left: 'prev,next today',
-                center: 'title',
-                right: 'dayGridMonth,timeGridWeek,timeGridDay'
+              headerToolbar={isMobile ? { // Toolbar para mobile
+                  left: 'prev,next today',
+                  center: 'title',
+                  right: ''
+              } : { // Toolbar para desktop
+                  left: 'prev,next today',
+                  center: 'title',
+                  right: 'dayGridMonth,timeGridWeek,timeGridDay'
               }}
-              initialView='timeGridWeek'
+              initialView={isMobile ? 'timeGridDay' : 'timeGridWeek'} // Visão inicial correta
               editable={false}
               selectable={false}
               selectMirror={true}
