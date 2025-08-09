@@ -88,7 +88,7 @@ code {
   }
 }
 
-/* FullCalendar custom styles */
+/* FullCalendar custom styles with Teal palette */
 .calendar-wrapper .fc {
   font-family: inherit;
 }
@@ -99,9 +99,9 @@ code {
 }
 
 .calendar-wrapper .fc-button-primary {
-  background-color: hsl(var(--primary));
-  border-color: hsl(var(--primary));
-  color: hsl(var(--primary-foreground));
+  background-color: hsl(184 65% 39%); /* Teal primary */
+  border-color: hsl(184 65% 39%);
+  color: hsl(0 0% 98%);
   border-radius: 0.375rem;
   padding: 0.25rem 0.75rem;
   font-size: 0.875rem;
@@ -110,12 +110,12 @@ code {
 }
 
 .calendar-wrapper .fc-button-primary:hover:not(:disabled) {
-  background-color: hsl(var(--primary) / 0.9);
-  border-color: hsl(var(--primary) / 0.9);
+  background-color: hsl(184 65% 34%); /* Darker teal */
+  border-color: hsl(184 65% 34%);
 }
 
 .calendar-wrapper .fc-button-primary:focus {
-  box-shadow: 0 0 0 2px hsl(var(--ring) / 0.2);
+  box-shadow: 0 0 0 2px hsl(184 65% 39% / 0.2);
 }
 
 .calendar-wrapper .fc-button-primary:disabled {
@@ -123,33 +123,35 @@ code {
 }
 
 .calendar-wrapper .fc-toolbar-title {
-  color: hsl(var(--foreground));
+  color: hsl(213 31% 9%);
   font-weight: 600;
   font-size: 1.25rem;
 }
 
 .calendar-wrapper .fc-col-header-cell {
-  background-color: hsl(var(--muted));
-  color: hsl(var(--muted-foreground));
+  background-color: hsl(180 31% 95%); /* Light teal tint */
+  color: hsl(184 65% 25%); /* Dark teal text */
   font-weight: 500;
   font-size: 0.875rem;
   padding: 0.75rem 0.5rem;
 }
 
 .calendar-wrapper .fc-daygrid-day {
-  background-color: hsl(var(--background));
+  background-color: hsl(0 0% 100%);
 }
 
 .calendar-wrapper .fc-daygrid-day:hover {
-  background-color: hsl(var(--muted) / 0.5);
+  background-color: hsl(180 31% 95% / 0.7); /* Light teal tint */
 }
 
 .calendar-wrapper .fc-day-today {
-  background-color: hsl(var(--primary) / 0.05) !important;
-  border-color: hsl(var(--primary) / 0.2);
+  background-color: hsl(184 65% 39% / 0.05) !important;
+  border-color: hsl(184 65% 39% / 0.2);
 }
 
 .calendar-wrapper .fc-event {
+  background-color: hsl(184 65% 39%); /* Teal */
+  color: hsl(0 0% 98%);
   border-radius: 0.375rem;
   padding: 0.125rem 0.375rem;
   font-size: 0.75rem;
@@ -159,7 +161,7 @@ code {
 }
 
 .calendar-wrapper .fc-event:hover {
-  opacity: 0.85;
+  background-color: hsl(184 65% 34%); /* Darker teal */
   cursor: pointer;
 }
 
@@ -168,12 +170,29 @@ code {
 }
 
 .calendar-wrapper .fc-timegrid-slot-label {
-  color: hsl(var(--muted-foreground));
+  color: hsl(184 65% 25%); /* Dark teal text */
   font-size: 0.75rem;
   font-weight: 500;
 }
 
 .calendar-wrapper .fc-now-indicator-line {
-  border-color: hsl(var(--destructive));
+  border-color: hsl(184 65% 39%); /* Teal */
   border-width: 2px;
+}
+
+/* Additional teal-themed elements */
+.calendar-wrapper .fc-highlight {
+  background-color: hsl(184 65% 39% / 0.1);
+}
+
+.calendar-wrapper .fc-daygrid-event-dot {
+  border-color: hsl(184 65% 39%);
+}
+
+.calendar-wrapper .fc-list-event-dot {
+  border-color: hsl(184 65% 39%);
+}
+
+.calendar-wrapper .fc-list-event:hover td {
+  background-color: hsl(180 31% 95%);
 }
