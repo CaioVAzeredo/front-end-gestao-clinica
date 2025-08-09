@@ -20,6 +20,30 @@ const Container = styled.div`
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .search-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .search-input {
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    width: 250px;
+  }
+
+  .search-clear {
+    background: #f5f5f5;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 8px 12px;
+    cursor: pointer;
+    color: #666;
   }
 
   table {
@@ -61,6 +85,7 @@ const Container = styled.div`
 
   .btn-excluir {
     background: #dc3545;
+    margin-right: 8px;
     color: white;
   }
 
@@ -87,6 +112,23 @@ const Container = styled.div`
   @media (max-width: 768px) {
     table {
       border: 0;
+    }
+
+    table thead {
+      display: none;
+    }
+
+    .topo {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .search-container {
+      width: 100%;
+    }
+
+    .search-input {
+      flex: 1;
     }
 
     table thead {
@@ -125,18 +167,21 @@ const Container = styled.div`
 
     table tbody td[data-label="Ações"] button {
       width: 100%;
+      margin-right: 0 !important;
     }
   }
 `;
 
 function Funcionarios() {
   const [funcionarios, setFuncionarios] = useState([]);
+  const [funcionariosFiltrados, setFuncionariosFiltrados] = useState([]);
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [showModalCadastrar, setShowModalCadastrar] = useState(false);
   const [showModalAtualizar, setShowModalAtualizar] = useState(false);
   const [funcionarioEditando, setFuncionarioEditando] = useState(null);
   const [excluindo, setExcluindo] = useState(false);
+  const [termoBusca, setTermoBusca] = useState("");
 
   const fetchFuncionarios = async () => {
   try {
@@ -146,16 +191,42 @@ function Funcionarios() {
     // Ajuste a atribuição conforme o formato real da resposta
     if (Array.isArray(response.data)) {
       setFuncionarios(response.data);
+      setFuncionariosFiltrados(response.data);
     } else if (response.data && Array.isArray(response.data.$values)) {
       setFuncionarios(response.data.$values);
+      setFuncionariosFiltrados(response.data.$values);
     } else {
       setFuncionarios([]);
+      setFuncionariosFiltrados([]);
       console.warn("Formato da resposta inesperado:", response.data);
     }
   } catch (error) {
     console.error("Erro ao buscar funcionários:", error);
   }
 };
+
+  // Função para filtrar funcionários
+  const filtrarFuncionarios = (termo) => {
+    if (!termo) {
+      setFuncionariosFiltrados(funcionarios);
+      return;
+    }
+
+    const termoLower = termo.toLowerCase();
+    const resultados = funcionarios.filter(func => 
+      func.nome.toLowerCase().includes(termoLower) ||
+      func.cpf.includes(termo) ||
+      func.email.toLowerCase().includes(termoLower)
+    );
+    
+    setFuncionariosFiltrados(resultados);
+  };
+
+  // Atualizar filtro quando o termo de busca mudar
+  useEffect(() => {
+    filtrarFuncionarios(termoBusca);
+    setPage(1); // Resetar para a primeira página ao filtrar
+  }, [termoBusca, funcionarios]);
 
   const handleTogglePerfil = async (func) => {
     const novoPerfil = func.perfil === "admin" ? "funcionario" : "admin";
@@ -194,7 +265,6 @@ function Funcionarios() {
     setShowModalAtualizar(true);
   };
 
-
   const handleExcluir = async (id) => {
     if (window.confirm("Tem certeza que deseja excluir este funcionario?")) {
       setExcluindo(true);
@@ -203,7 +273,7 @@ function Funcionarios() {
         // Recarrega a lista
         await fetchFuncionarios();
         // Ajusta a página se necessário (ex.: se a página atual ficar vazia)
-        const totalPagesAtualizado = Math.ceil((funcionarios.length - 1) / rowsPerPage);
+        const totalPagesAtualizado = Math.ceil((funcionariosFiltrados.length - 1) / rowsPerPage);
         if (page > totalPagesAtualizado) {
           setPage(Math.max(1, totalPagesAtualizado));
         }
@@ -216,9 +286,13 @@ function Funcionarios() {
     }
   };
 
+  const handleLimparBusca = () => {
+    setTermoBusca("");
+  };
+
   const startIndex = (page - 1) * rowsPerPage;
-  const paginated = funcionarios.slice(startIndex, startIndex + rowsPerPage);
-  const totalPages = Math.ceil(funcionarios.length / rowsPerPage);
+  const paginated = funcionariosFiltrados.slice(startIndex, startIndex + rowsPerPage);
+  const totalPages = Math.ceil(funcionariosFiltrados.length / rowsPerPage);
 
   return (
     <Container>
@@ -227,38 +301,24 @@ function Funcionarios() {
           <button className="btn btn-novo" onClick={handleNovo}>
             + Novo Funcionário
           </button>
+          
+          <div className="search-container">
+            <input
+              type="text"
+              placeholder="Buscar por nome, CPF ou e-mail..."
+              className="search-input"
+              value={termoBusca}
+              onChange={(e) => setTermoBusca(e.target.value)}
+            />
+            {termoBusca && (
+              <button className="search-clear" onClick={handleLimparBusca}>
+                ✕
+              </button>
+            )}
+          </div>
         </div>
 
-        <div className="paginacao">
-          <span>
-            {startIndex + 1}-{Math.min(startIndex + rowsPerPage, funcionarios.length)} de {funcionarios.length}
-          </span>
-          <select
-            value={rowsPerPage} 
-            onChange={(e) => { 
-              setRowsPerPage(Number(e.target.value)); 
-              setPage(1); 
-            }}
-          >
-            {[5, 10, 25, 50].map((size) => (
-              <option key={size} value={size}>
-                {size}
-              </option>
-            ))}
-          </select>
-          <button disabled={page === 1} onClick={() => setPage(1)}>
-            {"<<"}
-          </button>
-          <button disabled={page === 1} onClick={() => setPage((p) => p - 1)}>
-            {"<"}
-          </button>
-          <button disabled={page === totalPages} onClick={() => setPage((p) => p + 1)}>
-            {">"}
-          </button>
-          <button disabled={page === totalPages} onClick={() => setPage(totalPages)}>
-            {">>"}
-          </button>
-        </div>
+        
 
         <table>
           <thead>
@@ -297,18 +357,19 @@ function Funcionarios() {
                   </button>
                   <button
                     className="btn"
-                    style={{ backgroundColor: func.ativo ? "#6c757d" : "#28a745", color: "#fff", marginTop: "6px" }}
-                    onClick={() => handleToggleStatus(func)}
-                  >
-                    {func.ativo ? "Inativar" : "Ativar"}
-                  </button>
-                  <button
-                    className="btn"
-                    style={{ backgroundColor: "#007bff", color: "#fff", marginTop: "6px" }}
+                    style={{ backgroundColor: "#007bff", color: "#fff", marginTop: "6px", marginRight: "8px" }}
                     onClick={() => handleTogglePerfil(func)}
                   >
                     Mudar Perfil
                   </button>
+                  <button
+                    className="btn"
+                    style={{ backgroundColor: func.ativo ? "#6c757d" : "#28a745", color: "#fff", marginTop: "6px", marginRight: "8px"}}
+                    onClick={() => handleToggleStatus(func)}
+                  >
+                    {func.ativo ? "Inativar" : "Ativar"}
+                  </button>
+                  
                 </td>
               </tr>
             ))}
@@ -316,7 +377,7 @@ function Funcionarios() {
         </table>
         <div className="paginacao">
           <span>
-            {startIndex + 1}-{Math.min(startIndex + rowsPerPage, funcionarios.length)} de {funcionarios.length}
+            {startIndex + 1}-{Math.min(startIndex + rowsPerPage, funcionariosFiltrados.length)} de {funcionariosFiltrados.length}
           </span>
           <select value={rowsPerPage} onChange={(e) => { setRowsPerPage(Number(e.target.value)); setPage(1); }}>
             {[5, 10, 25, 50].map((size) => (

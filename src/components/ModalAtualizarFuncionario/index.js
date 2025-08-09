@@ -211,7 +211,7 @@ function ModalAtualizarFuncionario({ onClose, funcionario: funcionarioProp, onSa
 
           <label>Senha</label>
           <input
-            type="text" // agora aparece visível
+            type="password"
             value={funcionario.senhaHash}
             onChange={(e) => setFuncionario({ ...funcionario, senhaHash: e.target.value })}
           />
