@@ -1,173 +1,334 @@
-import { useEffect, useState } from "react";
-import { Button } from "../ui/button";
+import React, { useState, useEffect } from "react";
+import styled from "styled-components";
 
-export default function ModalEditarAgendamento({
-    open,
-    initialData,
-    servicos = [],
-    funcionarios = [],
-    onCancel,
-    onSubmit
-}) {
-    const [form, setForm] = useState(initialData || {});
-    const [saving, setSaving] = useState(false);
+// Reutilizando os estilos do componente ModalNovoAtendimento para consistência
+const ModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 10px;
+  transition: opacity 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  opacity: ${({ isOpen }) => (isOpen ? 1 : 0)};
+`;
 
-    useEffect(() => {
-        setForm(initialData || {});
-    }, [initialData]);
+const ModalContent = styled.div`
+  background: linear-gradient(145deg, #ffffff, #f9f9f9);
+  padding: 24px;
+  border-radius: 16px;
+  width: 40vw;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), 0 4px 16px rgba(0, 0, 0, 0.1);
+  position: relative;
+  animation: fadeInScale 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 
-    if (!open || !form) return null;
+  @keyframes fadeInScale {
+    from {
+      transform: scale(0.95);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
 
-    const handleChange = (field, value) => {
-        setForm((prev) => ({ ...prev, [field]: value }));
-    };
+  @media (max-width: 768px) {
+    padding: 16px;
+    width: 95%;
+  }
 
-    const handleSubmit = async () => {
-        setSaving(true);
-        try {
-            await onSubmit?.(form);
-        } finally {
-            setSaving(false);
-        }
-    };
+  h2, h3 {
+    margin-bottom: 12px;
+    font-family: 'Roboto', sans-serif;
+    font-weight: 500;
+    color: #00796b;
+  }
 
-    return (
-        <div className="fixed inset-0 z-50 bg-black/30 flex items-center justify-center p-4 backdrop-blur-sm"
-            onClick={(e) => {
-                if (e.target === e.currentTarget) onCancel?.();
-            }}
-        >
-            <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
-                {/* Header */}
-                <div className="bg-gray-50 px-6 py-4 border-b">
-                    <h2 className="text-xl font-bold text-gray-800">
-                        Editar agendamento #{form.id}
-                    </h2>
-                </div>
+  .close-button {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: transparent;
+    border: none;
+    font-size: 26px;
+    cursor: pointer;
+    color: #757575;
+    transition: color 0.2s, transform 0.2s;
+    &:hover {
+      color: #424242;
+      transform: scale(1.1);
+    }
+  }
 
-                {/* Body */}
-                <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
-                    {/* Cliente (readonly) */}
-                    <div className="space-y-1">
-                        <label className="block text-sm font-medium text-gray-700">Cliente</label>
-                        <div className="relative">
-                            <input
-                                className="w-full rounded-md border border-gray-200 px-3 py-2 bg-gray-50 text-gray-600 cursor-not-allowed"
-                                value={form.clienteNome || ""}
-                                readOnly
-                                disabled
-                            />
-                            <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                                <svg className="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                                </svg>
-                            </div>
-                        </div>
-                    </div>
+  label {
+    display: block;
+    font-size: 13px;
+    margin-bottom: 4px;
+    margin-top: 8px;
+    font-weight: bold;
+    color: #424242;
+  }
 
-                    {/* Data/Hora de Início */}
-                    <div className="space-y-1">
-                        <label className="block text-sm font-medium text-gray-700">Data e hora de início</label>
-                        <input
-                            type="datetime-local"
-                            value={form.dataHoraInicio || ""}
-                            onChange={(e) => handleChange("dataHoraInicio", e.target.value)}
-                            className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                    </div>
+  input,
+  select,
+  textarea {
+    width: 100%;
+    max-width: 100%;
+    padding: 10px 12px;
+    margin-bottom: 6px;
+    border-radius: 8px;
+    border: 1px solid #9e9e9e; /* Cor da borda alterada */
+    font-size: 15px;
+    background: #fff;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    &:focus {
+      border-color: #009688;
+      box-shadow: 0 0 0 2px rgba(0, 150, 136, 0.2);
+    }
+  }
+  
+  textarea {
+    resize: vertical;
+    min-height: 70px;
+  }
 
-                    {/* Duração */}
-                    <div className="space-y-1">
-                        <label className="block text-sm font-medium text-gray-700">Duração (minutos)</label>
-                        <input
-                            type="number"
-                            min={0}
-                            value={form.duracaoAtendimento ?? 0}
-                            onChange={(e) => handleChange("duracaoAtendimento", e.target.value)}
-                            className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                    </div>
+  .field-row {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
 
-                    {/* Serviço */}
-                    <div className="space-y-1">
-                        <label className="block text-sm font-medium text-gray-700">Serviço</label>
-                        <select
-                            className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            value={form.servicoId ?? ""}
-                            onChange={(e) => handleChange("servicoId", e.target.value)}
-                        >
-                            <option value="" disabled>Selecione...</option>
-                            {servicos.map((sv) => (
-                                <option key={sv.idServico ?? sv.id} value={sv.idServico ?? sv.id}>
-                                    {sv.nomeServico ?? sv.nome ?? "Serviço"}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
+    & > div {
+      flex: 1;
+      min-width: 0;
+    }
 
-                    {/* Funcionário */}
-                    <div className="space-y-1">
-                        <label className="block text-sm font-medium text-gray-700">Funcionário</label>
-                        <select
-                            className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            value={form.funcionarioId ?? ""}
-                            onChange={(e) => handleChange("funcionarioId", e.target.value)}
-                        >
-                            <option value="" disabled>Selecione...</option>
-                            {funcionarios.map((fn) => (
-                                <option key={fn.idFuncionario ?? fn.id} value={fn.idFuncionario ?? fn.id}>
-                                    {fn.nome ?? fn.name ?? "Funcionário"}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
+    @media (max-width: 768px) {
+      flex-direction: column;
+    }
+  }
+  
+  .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 20px;
+  }
 
-                    {/* Status */}
-                    <div className="space-y-1">
-                        <label className="block text-sm font-medium text-gray-700">Status</label>
-                        <select
-                            className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            value={form.statusAgenda}
-                            onChange={(e) => handleChange("statusAgenda", e.target.value)}
-                        >
-                            <option value="HorarioMarcado">Horário Marcado</option>
-                            <option value="Pendente">Pendente</option>
-                            <option value="Cancelado">Cancelado</option>
-                            <option value="Concluido">Concluído</option>
-                        </select>
-                    </div>
+  button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 500;
+    transition: background 0.2s, transform 0.1s;
+    &:active {
+      transform: scale(0.98);
+    }
+  }
 
-                    {/* Observações */}
-                    <div className="space-y-1">
-                        <label className="block text-sm font-medium text-gray-700">Observações</label>
-                        <textarea
-                            rows={4}
-                            className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            value={form.observacoes || ""}
-                            onChange={(e) => handleChange("observacoes", e.target.value)}
-                        />
-                    </div>
-                </div>
+  button.cancelar {
+    background: #e0e0e0;
+    color: #424242;
+    &:hover {
+      background: #bdbdbd;
+    }
+  }
 
-                {/* Footer */}
-                <div className="bg-gray-50 px-6 py-4 border-t flex justify-end gap-3">
-                    <Button 
-                        variant="outline" 
-                        onClick={onCancel} 
-                        disabled={saving}
-                        className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-100 transition-colors"
-                    >
-                        Cancelar
-                    </Button>
-                    <Button 
-                        onClick={handleSubmit} 
-                        disabled={saving}
-                        className="px-4 py-2 bg-primary text-white rounded-md hover:bg-[#008a70] transition-colors disabled:opacity-50"
-                        >
-                        {saving ? "Salvando..." : "Salvar alterações"}
-                    </Button>
-                </div>
+  button[type="submit"] {
+    background: #009688;
+    color: #fff;
+    &:hover {
+      background: #00796b;
+    }
+    &:disabled {
+      background: #80cbc4;
+      cursor: not-allowed;
+    }
+  }
+
+  .erro {
+    color: #d32f2f;
+    font-size: 12px;
+    margin-top: -4px;
+    margin-bottom: 4px;
+    font-style: italic;
+  }
+`;
+
+function ModalEditarAgendamento({ open, initialData, servicos = [], funcionarios = [], onClose, onSubmit }) {
+  const [form, setForm] = useState(initialData || {});
+  const [erros, setErros] = useState({});
+  const [salvando, setSalvando] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    if (initialData) {
+      setForm(initialData);
+      setErros({});
+      setIsOpen(true);
+    }
+  }, [initialData]);
+
+  if (!open) {
+    return null;
+  }
+
+  function validar() {
+    const novosErros = {};
+    if (!form.clienteId) novosErros.clienteId = "O cliente é obrigatório.";
+    if (!form.servicoId) novosErros.servicoId = "Selecione um serviço.";
+    if (!form.funcionarioId) novosErros.funcionarioId = "Selecione um funcionário.";
+    if (!form.dataHoraInicio) novosErros.dataHoraInicio = "Informe a data e hora do atendimento.";
+    if (!form.duracaoAtendimento || Number(form.duracaoAtendimento) <= 0) {
+      novosErros.duracaoAtendimento = "A duração deve ser maior que zero.";
+    }
+    setErros(novosErros);
+    return Object.keys(novosErros).length === 0;
+  }
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!validar()) return;
+
+    setSalvando(true);
+    try {
+      const body = {
+        ...form,
+        clienteId: Number(form.clienteId),
+        servicoId: Number(form.servicoId),
+        funcionarioId: Number(form.funcionarioId),
+        duracaoAtendimento: Number(form.duracaoAtendimento),
+      };
+      
+      await onSubmit(body);
+      
+      handleClose();
+
+    } catch (error) {
+      console.error("Erro ao salvar o agendamento", error);
+      alert(`Erro ao salvar: ${error.message}`);
+    } finally {
+      setSalvando(false);
+    }
+  };
+
+  function handleClose() {
+    setIsOpen(false);
+    setTimeout(onClose, 400);
+  }
+
+  const onOverlayClick = (e) => {
+    if (e.target === e.currentTarget) {
+      handleClose();
+    }
+  };
+
+  return (
+    <ModalOverlay onMouseDown={onOverlayClick} isOpen={isOpen}>
+      <ModalContent onMouseDown={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <button type="button" className="close-button" onClick={handleClose} disabled={salvando}>
+          ×
+        </button>
+        <h2 id="modal-title">Editar Agendamento #{initialData?.id}</h2>
+
+        <form onSubmit={handleSubmit}>
+          
+          <div className="field-row">
+            <div>
+              <label>Cliente</label>
+              <input type="text" value={initialData?.clienteNome || ""} readOnly disabled />
+              {erros.clienteId && <div className="erro">{erros.clienteId}</div>}
             </div>
-        </div>
-    );
+            <div>
+              <label htmlFor="funcionarioId">Funcionário</label>
+              <select name="funcionarioId" id="funcionarioId" value={form.funcionarioId ?? ""} onChange={handleChange} disabled={salvando}>
+                <option value="">Selecione...</option>
+                {funcionarios.map((f) => (
+                  <option key={f.idFuncionario || f.id} value={f.idFuncionario || f.id}>
+                    {f.nome || "Funcionário"}
+                  </option>
+                ))}
+              </select>
+              {erros.funcionarioId && <div className="erro">{erros.funcionarioId}</div>}
+            </div>
+          </div>
+          
+          <label htmlFor="servicoId">Serviço</label>
+          <select name="servicoId" id="servicoId" value={form.servicoId ?? ""} onChange={handleChange} disabled={salvando}>
+            <option value="">Selecione...</option>
+            {servicos.map((s) => (
+              <option key={s.idServico || s.id} value={s.idServico || s.id}>
+                {s.nomeServico || s.nome || "Serviço"}
+              </option>
+            ))}
+          </select>
+          {erros.servicoId && <div className="erro">{erros.servicoId}</div>}
+
+          <div className="field-row">
+            <div>
+              <label htmlFor="dataHoraInicio">Data e Hora de Início</label>
+              <input 
+                id="dataHoraInicio"
+                type="datetime-local" 
+                name="dataHoraInicio" 
+                value={form.dataHoraInicio || ""} 
+                onChange={handleChange} 
+                disabled={salvando} 
+              />
+              {erros.dataHoraInicio && <div className="erro">{erros.dataHoraInicio}</div>}
+            </div>
+            <div>
+              <label htmlFor="duracaoAtendimento">Duração (minutos)</label>
+              <input 
+                id="duracaoAtendimento"
+                type="number" 
+                name="duracaoAtendimento" 
+                value={form.duracaoAtendimento ?? ""} 
+                onChange={handleChange} 
+                min="1" 
+                disabled={salvando} 
+              />
+              {erros.duracaoAtendimento && <div className="erro">{erros.duracaoAtendimento}</div>}
+            </div>
+          </div>
+          
+          <label htmlFor="statusAgenda">Status</label>
+          <select id="statusAgenda" name="statusAgenda" value={form.statusAgenda || "HorarioMarcado"} onChange={handleChange} disabled={salvando}>
+            <option value="HorarioMarcado">Horário Marcado</option>
+            <option value="Cancelado">Cancelado</option>
+            <option value="Concluido">Concluído</option>
+            <option value="Pendente">Pendente</option>
+          </select>
+          
+          <label htmlFor="observacoes">Observações</label>
+          <textarea id="observacoes" name="observacoes" rows="3" value={form.observacoes || ""} onChange={handleChange} disabled={salvando} />
+
+          <div className="modal-actions">
+            <button type="button" className="cancelar" onClick={handleClose} disabled={salvando}>
+              Cancelar
+            </button>
+            <button type="submit" disabled={salvando}>
+              {salvando ? "Salvando..." : "Salvar alterações"}
+            </button>
+          </div>
+        </form>
+      </ModalContent>
+    </ModalOverlay>
+  );
 }
+
+export default ModalEditarAgendamento;

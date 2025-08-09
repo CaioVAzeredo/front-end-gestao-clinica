@@ -5,35 +5,164 @@ const REACT_APP_PORT = process.env.REACT_APP_PORT;
 
 const ModalOverlay = styled.div`
   position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0, 0, 0, 0.4);
-  display: flex; justify-content: center; align-items: center;
-  z-index: 999; padding: 20px;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 10px;
+  transition: opacity 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  opacity: ${({ isOpen }) => (isOpen ? 1 : 0)};
 `;
 
 const ModalContent = styled.div`
-  background: #fff; padding: 20px; border-radius: 8px; width: 650px;
-  max-height: 80vh; overflow-y: auto; box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  background: linear-gradient(145deg, #ffffff, #f9f9f9);
+  padding: 24px;
+  border-radius: 16px;
+  width: 40vw;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), 0 4px 16px rgba(0, 0, 0, 0.1);
   position: relative;
+  animation: fadeInScale 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 
-  h2 { margin-bottom: 20px; }
-  h3 { margin-top: 20px; margin-bottom: 10px; }
-  .close-button { position: absolute; top: 10px; right: 10px; background: transparent; border: none; font-size: 20px; cursor: pointer; color: #444; }
-  label { display: block; font-size: 14px; margin-bottom: 5px; margin-top: 10px; }
-  input, select, textarea { width: 100%; padding: 8px; margin-bottom: 5px; border-radius: 4px; border: 1px solid #ccc; }
-  textarea { resize: vertical; }
-  .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
-  button.cancelar { background: #aaa; }
-  button { background: #009688; color: #fff; padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; }
-  .erro { color: red; font-size: 12px; margin-top: -4px; margin-bottom: 6px; }
+  @keyframes fadeInScale {
+    from {
+      transform: scale(0.95);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  @media (max-width: 768px) {
+    padding: 16px;
+    max-width: 95%;
+  }
+
+  h2, h3 {
+    margin-bottom: 12px;
+    font-family: 'Roboto', sans-serif;
+    font-weight: 500;
+    color: #00796b;
+  }
+
+  .close-button {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: transparent;
+    border: none;
+    font-size: 26px;
+    cursor: pointer;
+    color: #757575;
+    transition: color 0.2s, transform 0.2s;
+    &:hover {
+      color: #424242;
+      transform: scale(1.1);
+    }
+  }
+
+  label {
+    display: block;
+    font-size: 13px;
+    margin-bottom: 4px;
+    margin-top: 8px;
+    font-weight: bold;
+    color: #424242;
+  }
+
+  input,
+  select,
+  textarea {
+    width: 100%;
+    max-width: 100%;
+    padding: 10px 12px;
+    margin-bottom: 6px;
+    border-radius: 8px;
+    border: 1px solid #9e9e9e;
+    font-size: 15px;
+    background: #fff;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    &:focus {
+      border-color: #009688;
+      box-shadow: 0 0 0 2px rgba(0, 150, 136, 0.2);
+    }
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 70px;
+    max-width: 100%;
+  }
+
+  .form-row {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+
+    > div {
+      flex: 1;
+      min-width: 0;
+    }
+  }
+
+  .erro {
+    color: #d32f2f;
+    font-size: 12px;
+    margin-top: -4px;
+    margin-bottom: 4px;
+    font-style: italic;
+  }
+
+  .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 20px;
+  }
+
+  button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 500;
+    transition: background 0.2s, transform 0.1s;
+    &:active {
+      transform: scale(0.98);
+    }
+  }
+
+  button.cancelar {
+    background: #e0e0e0;
+    color: #424242;
+    &:hover {
+      background: #bdbdbd;
+    }
+  }
+
+  button[type="submit"] {
+    background: #009688;
+    color: #fff;
+    &:hover {
+      background: #00796b;
+    }
+    &:disabled {
+      background: #80cbc4;
+      cursor: not-allowed;
+    }
+  }
 `;
 
-function formatPriceForInput(value) {
-  if (value === null || value === undefined || isNaN(value)) return "";
-  return new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2 }).format(value);
-}
-
-// helpers p/ normalizar payloads diferentes
+// Função para normalizar payloads de categorias
 const toArray = (payload) => {
   if (!payload) return [];
   if (Array.isArray(payload)) return payload;
@@ -43,6 +172,7 @@ const toArray = (payload) => {
   return [];
 };
 
+// Função para buscar categorias de forma flexível
 const fetchCategoriasFlex = async () => {
   const base = `http://localhost:${REACT_APP_PORT}/api`;
   const urls = [
@@ -60,23 +190,27 @@ const fetchCategoriasFlex = async () => {
       if (arr.length) return arr;
       if (Array.isArray(json) && json.length) return json;
     } catch {
-      // tenta próxima rota
+      // Tenta a próxima rota em caso de erro
     }
   }
   return [];
 };
 
 function ModalAtualizarServico({ onClose, onSalvou, servico }) {
-  const [servicoForm, setServicoForm] = useState(() => ({
-    ...servico,
-    categoriaId: servico?.categoria?.idCategoria || ""
-  }));
+  const [servicoForm, setServicoForm] = useState({
+    idServico: null,
+    nomeServico: "",
+    descricao: "",
+    preco: 0,
+    duracaoEstimada: 0,
+    ativo: true,
+    categoriaId: "",
+  });
 
   const [erros, setErros] = useState({});
   const [salvando, setSalvando] = useState(false);
   const [categorias, setCategorias] = useState([]);
-  const [precoInputValue, setPrecoInputValue] = useState(false);
-  const [duracaoInputValue, setDuracaoInputValue] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     if (servico) {
@@ -84,8 +218,9 @@ function ModalAtualizarServico({ onClose, onSalvou, servico }) {
         ...servico,
         categoriaId: servico.categoria?.idCategoria || "",
       });
-      setPrecoInputValue(servico.preco !== 0);
-      setDuracaoInputValue(servico.duracaoEstimada !== 0);
+      setIsOpen(true);
+    } else {
+      setIsOpen(false);
     }
   }, [servico]);
 
@@ -101,6 +236,10 @@ function ModalAtualizarServico({ onClose, onSalvou, servico }) {
     }
     buscarCategorias();
   }, []);
+
+  if (!servico) {
+    return null;
+  }
 
   function validar() {
     const novosErros = {};
@@ -119,13 +258,7 @@ function ModalAtualizarServico({ onClose, onSalvou, servico }) {
     setSalvando(true);
     try {
       const dadosParaAtualizar = {
-        idServico: servicoForm.idServico,
-        nomeServico: servicoForm.nomeServico,
-        descricao: servicoForm.descricao,
-        preco: servicoForm.preco,
-        duracaoEstimada: servicoForm.duracaoEstimada,
-        ativo: servicoForm.ativo,
-        // envia categoriaId como número, quando aplicável
+        ...servicoForm,
         categoriaId: Number(servicoForm.categoriaId) || servicoForm.categoriaId,
       };
 
@@ -143,107 +276,97 @@ function ModalAtualizarServico({ onClose, onSalvou, servico }) {
       }
       alert("Serviço atualizado com sucesso!");
       onSalvou?.();
-      onClose();
+      handleClose();
     } catch (error) {
       console.error("Erro ao atualizar serviço", error);
-      alert("Erro ao atualizar serviço!");
+      alert(`Erro ao atualizar serviço: ${error.message}`);
     } finally {
       setSalvando(false);
     }
   }
 
-  const handlePrecoChange = (e) => {
-    const value = e.target.value.replace(/[^0-9]/g, "");
-    const floatValue = value ? parseFloat(value) / 100 : 0;
-    setServicoForm((prev) => ({ ...prev, preco: floatValue }));
+  const handleClose = () => {
+    setIsOpen(false);
+    setTimeout(onClose, 400);
   };
 
-  const handleDuracaoChange = (e) => {
-    const value = e.target.value;
-    const numericValue = parseInt(value, 10);
-    setServicoForm((prev) => ({
-      ...prev,
-      duracaoEstimada: isNaN(numericValue) || numericValue < 0 ? 0 : numericValue,
-    }));
-  };
-
-  const handleOtherChange = (e) => {
+  const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setServicoForm((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
-  };
-
-  const formatPriceDisplay = (price) => {
-    if (price === 0 && !precoInputValue) return "";
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-      minimumFractionDigits: 2,
-    }).format(price);
-  };
-
-  const formatDuracaoDisplay = (duracao) => {
-    if (duracao === 0 && !duracaoInputValue) return "";
-    return duracao;
-  };
-
-  const onOverlayClick = (e) => {
-    if (e.target === e.currentTarget) onClose();
+    if (name === "preco") {
+      const numericValue = value.replace(/[^0-9]/g, "");
+      const floatValue = numericValue ? parseFloat(numericValue) / 100 : 0;
+      setServicoForm((prev) => ({ ...prev, [name]: floatValue }));
+    } else if (name === "duracaoEstimada") {
+      const numericValue = parseInt(value, 10);
+      setServicoForm((prev) => ({
+        ...prev,
+        [name]: isNaN(numericValue) || numericValue < 0 ? 0 : numericValue,
+      }));
+    } else {
+      setServicoForm((prev) => ({
+        ...prev,
+        [name]: type === "checkbox" ? checked : value,
+      }));
+    }
   };
 
   return (
-    <ModalOverlay onMouseDown={onOverlayClick}>
-      <ModalContent onMouseDown={(e) => e.stopPropagation()}>
-        <button type="button" className="close-button" onClick={onClose}>×</button>
-        <h2>Atualizar Serviço</h2>
+    <ModalOverlay onMouseDown={(e) => e.target === e.currentTarget && handleClose()} isOpen={isOpen}>
+      <ModalContent onMouseDown={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <button type="button" className="close-button" onClick={handleClose}>×</button>
+        <h2 id="modal-title">Atualizar Serviço</h2>
 
         <form onSubmit={salvarServico}>
-          <label>Nome do Serviço</label>
+          <label htmlFor="nomeServico">Nome do Serviço</label>
           <input
+            id="nomeServico"
             name="nomeServico"
             value={servicoForm.nomeServico || ""}
-            onChange={handleOtherChange}
+            onChange={handleChange}
           />
           {erros.nomeServico && <div className="erro">{erros.nomeServico}</div>}
 
-          <label>Descrição</label>
+          <label htmlFor="descricao">Descrição</label>
           <textarea
+            id="descricao"
             name="descricao"
             rows="3"
             value={servicoForm.descricao || ""}
-            onChange={handleOtherChange}
+            onChange={handleChange}
           />
 
-          <label>Preço</label>
-          <input
-            name="preco"
-            type="text"
-            value={formatPriceDisplay(servicoForm.preco)}
-            onChange={handlePrecoChange}
-            onFocus={() => setPrecoInputValue(true)}
-            onBlur={() => { if (servicoForm.preco === 0) setPrecoInputValue(false); }}
-          />
-          {erros.preco && <div className="erro">{erros.preco}</div>}
-
-          <label>Duração Estimada (minutos)</label>
-          <input
-            name="duracaoEstimada"
-            type="number"
-            min="0"
-            value={formatDuracaoDisplay(servicoForm.duracaoEstimada)}
-            onChange={handleDuracaoChange}
-            onFocus={() => setDuracaoInputValue(true)}
-            onBlur={() => { if (servicoForm.duracaoEstimada === 0) setDuracaoInputValue(false); }}
-          />
-          {erros.duracaoEstimada && <div className="erro">{erros.duracaoEstimada}</div>}
-
-          <label>Categoria</label>
+          <div className="form-row">
+            <div>
+              <label htmlFor="preco">Preço</label>
+              <input
+                id="preco"
+                name="preco"
+                type="text"
+                value={new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(servicoForm.preco)}
+                onChange={handleChange}
+              />
+              {erros.preco && <div className="erro">{erros.preco}</div>}
+            </div>
+            <div>
+              <label htmlFor="duracaoEstimada">Duração Estimada (minutos)</label>
+              <input
+                id="duracaoEstimada"
+                name="duracaoEstimada"
+                type="number"
+                min="0"
+                value={servicoForm.duracaoEstimada}
+                onChange={handleChange}
+              />
+              {erros.duracaoEstimada && <div className="erro">{erros.duracaoEstimada}</div>}
+            </div>
+          </div>
+          
+          <label htmlFor="categoriaId">Categoria</label>
           <select
+            id="categoriaId"
             name="categoriaId"
             value={servicoForm.categoriaId || ""}
-            onChange={handleOtherChange}
+            onChange={handleChange}
           >
             <option value="">Selecione uma categoria...</option>
             {categorias.map((cat) => (
@@ -253,9 +376,20 @@ function ModalAtualizarServico({ onClose, onSalvou, servico }) {
             ))}
           </select>
           {erros.categoriaId && <div className="erro">{erros.categoriaId}</div>}
+          
+          <label htmlFor="ativo">Status</label>
+          <select
+            id="ativo"
+            name="ativo"
+            value={String(servicoForm.ativo)}
+            onChange={handleChange}
+          >
+            <option value="true">Ativo</option>
+            <option value="false">Inativo</option>
+          </select>
 
           <div className="modal-actions">
-            <button type="button" className="cancelar" onClick={onClose} disabled={salvando}>
+            <button type="button" className="cancelar" onClick={handleClose} disabled={salvando}>
               Cancelar
             </button>
             <button type="submit" disabled={salvando}>

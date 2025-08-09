@@ -1,389 +1,6 @@
-/*import React, { useState } from "react";
-import styled from "styled-components";
-const REACT_APP_PORT = process.env.REACT_APP_PORT;
-
-const ModalOverlay = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.4);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 999;
-  padding: 20px;
-`;
-
-const ModalContent = styled.div`
-  background: #fff;
-  padding: 20px;
-  border-radius: 8px;
-  width: 650px;
-  max-height: 80vh;
-  overflow-y: auto;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-  position: relative;
-
-  h2 {
-    margin-bottom: 20px;
-  }
-
-  .close-button {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background: transparent;
-    border: none;
-    font-size: 20px;
-    cursor: pointer;
-    color: #444;
-  }
-
-  label {
-    display: block;
-    font-size: 14px;
-    margin-bottom: 5px;
-    margin-top: 10px;
-  }
-
-  input,
-  select {
-    width: 100%;
-    padding: 8px;
-    margin-bottom: 5px;
-    border-radius: 4px;
-    border: 1px solid #ccc;
-  }
-
-  textarea {
-    width: 100%;
-    padding: 8px;
-    border-radius: 4px;
-    border: 1px solid #ccc;
-    resize: vertical;
-  }
-
-  .modal-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    margin-top: 20px;
-  }
-
-  button.cancelar {
-    background: #aaa;
-  }
-
-  button {
-    background: #009688;
-    color: #fff;
-    padding: 10px 15px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-  }
-
-  .erro {
-    color: red;
-    font-size: 12px;
-    margin-top: -4px;
-    margin-bottom: 6px;
-  }
-`;
-
-function ModalCadastrarFuncionario({ onClose, onSalvou }) {
-    const [Funcionario, setFuncionario] = useState({
-        nome: "",
-        telefone: "",
-        email: "",
-        cpf: "",
-        perfil: "",
-        senhaHash: "",
-        dataNascimento: "",
-        ativo: true,
-        endereco: {
-            logradouro: "",
-            numero: "",
-            complemento: "",
-            cidade: "",
-            uf: "",
-            cep: ""
-        }
-    });
-    const [erros, setErros] = useState({});
-    const [salvando, setSalvando] = useState(false);
-
-    function validar() {
-        const novosErros = {};
-
-        // Nome obrigatório
-        if (!Funcionario.nome.trim()) {
-            novosErros.nome = "O nome é obrigatório.";
-        }
-
-        // Telefone - exatamente 11 dígitos
-        if (!Funcionario.telefone) {
-            novosErros.telefone = "O telefone é obrigatório.";
-        } else if (Funcionario.telefone.length !== 11) {
-            novosErros.telefone = "O telefone deve ter exatamente 11 números.";
-        }
-
-        // E-mail válido
-        if (!Funcionario.email.trim()) {
-            novosErros.email = "O e-mail é obrigatório.";
-        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(Funcionario.email)) {
-            novosErros.email = "E-mail inválido.";
-        }
-
-        // CPF - exatamente 11 dígitos
-        if (!Funcionario.cpf) {
-            novosErros.cpf = "O CPF é obrigatório.";
-        } else if (Funcionario.cpf.length !== 11) {
-            novosErros.cpf = "O CPF deve ter exatamente 11 números.";
-        }
-
-        // Data de Nascimento obrigatória
-        if (!Funcionario.dataNascimento.trim()) {
-            novosErros.dataNascimento = "A data de nascimento é obrigatória.";
-        }
-
-        // Perfil obrigatório
-        if (!Funcionario.perfil) {
-            novosErros.perfil = "O Perfil é obrigatório";
-        }
-
-        // Senha obrigatória
-        if (!Funcionario.senhaHash) {
-            novosErros.senhaHash = "A senha é obrigatória";
-        }
-
-        // Logradouro obrigatório
-        if (!Funcionario.endereco.logradouro.trim()) {
-            novosErros.logradouro = "O logradouro é obrigatório.";
-        }
-
-        // Número - exatamente 2 caracteres
-        if (!Funcionario.endereco.numero) {
-            novosErros.numero = "O número é obrigatório.";
-        }
-
-        // Cidade obrigatória
-        if (!Funcionario.endereco.cidade.trim()) {
-            novosErros.cidade = "A cidade é obrigatória.";
-        }
-
-        // UF - exatamente 2 letras
-        if (!Funcionario.endereco.uf) {
-            novosErros.uf = "O UF é obrigatório.";
-        } else if (!/^[A-Za-z]{2}$/.test(Funcionario.endereco.uf)) {
-            novosErros.uf = "O UF deve ter exatamente 2 letras.";
-        }
-
-        // CEP - exatamente 8 números
-        if (!Funcionario.endereco.cep) {
-            novosErros.cep = "O CEP é obrigatório.";
-        } else if (!/^\d{8}$/.test(Funcionario.endereco.cep)) {
-            novosErros.cep = "O CEP deve ter exatamente 8 números.";
-        }
-
-        setErros(novosErros);
-        return Object.keys(novosErros).length === 0;
-    }
-
-    async function salvarFuncionario(e) {
-        e.preventDefault();
-        if (!validar()) return;
-
-        setSalvando(true);
-        try {
-            const resp = await fetch(`http://localhost:${REACT_APP_PORT}/api/Funcionarios`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(Funcionario)
-            });
-            if (!resp.ok) {
-                const txt = await resp.text().catch(() => "");
-                throw new Error(txt || `Erro HTTP ${resp.status}`);
-            }
-            alert("Funcionario cadastrado com sucesso!");
-            if (typeof onSalvou === "function") onSalvou();
-            onClose();
-        } catch (error) {
-            console.error("Erro ao cadastrar Funcionario", error);
-            alert("Erro ao cadastrar Funcionario!");
-        } finally {
-            setSalvando(false);
-        }
-    }
-
-    function handleEnderecoChange(e) {
-        const { name, value } = e.target;
-        setFuncionario((prev) => ({
-            ...prev,
-            endereco: { ...prev.endereco, [name]: value }
-        }));
-    }
-
-    return (
-        <ModalOverlay onClick={onClose}>
-            <ModalContent onClick={(e) => e.stopPropagation()}>
-                <button type="button" className="close-button" onClick={onClose}>
-                    ×
-                </button>
-                <h2>Cadastrar Funcionario</h2>
-
-                <form onSubmit={salvarFuncionario}>
-                    <label>Nome</label>
-                    <input
-                        value={Funcionario.nome}
-                        onChange={(e) => setFuncionario({ ...Funcionario, nome: e.target.value })}
-                    />
-                    {erros.nome && <div className="erro">{erros.nome}</div>}
-
-                    <label>Telefone</label>
-                    <input
-                        value={Funcionario.telefone}
-                        maxLength={11}
-                        onChange={(e) =>
-                            setFuncionario({ ...Funcionario, telefone: e.target.value.replace(/\D/g, "") })
-                        }
-                    />
-                    {erros.telefone && <div className="erro">{erros.telefone}</div>}
-
-                    <label>E-mail</label>
-                    <input
-                        type="email"
-                        value={Funcionario.email}
-                        onChange={(e) => setFuncionario({ ...Funcionario, email: e.target.value })}
-                    />
-                    {erros.email && <div className="erro">{erros.email}</div>}
-
-                    <label>CPF</label>
-                    <input
-                        value={Funcionario.cpf}
-                        maxLength={11}
-                        onChange={(e) =>
-                            setFuncionario({ ...Funcionario, cpf: e.target.value.replace(/\D/g, "") })
-                        }
-                    />
-                    {erros.cpf && <div className="erro">{erros.cpf}</div>}
-
-                    <label>Data de Nascimento</label>
-                    <input
-                        type="date"
-                        value={Funcionario.dataNascimento}
-                        onChange={(e) => setFuncionario({ ...Funcionario, dataNascimento: e.target.value })}
-                    />
-                    {erros.dataNascimento && <div className="erro">{erros.dataNascimento}</div>}
-
-                    <label>Senha</label>
-                    <input
-                        type="password"
-                        value={Funcionario.senhaHash}
-                        onChange={(e) => setFuncionario({ ...Funcionario, senhaHash: e.target.value })}
-                    />
-                    {erros.senhaHash && <div className="erro">{erros.senhaHash}</div>}
-
-                    <label>Perfil</label>
-                    <select
-                        id="perfil"
-                        value={Funcionario.perfil}
-                        onChange={(e) => setFuncionario({ ...Funcionario, perfil: e.target.value })}
-                    >
-                        <option value="admin">Administrador</option>
-                        <option value="funcionario">Funcionário</option>
-                    </select>
-
-                    <label>Status</label>
-                    <select
-                        value={String(Funcionario.ativo)}
-                        onChange={(e) => setFuncionario({ ...Funcionario, ativo: e.target.value === "true" })}
-                    >
-                        <option value="true">Ativo</option>
-                        <option value="false">Inativo</option>
-                    </select>
-
-                    <h3>Endereço</h3>
-                    <label>Logradouro</label>
-                    <input
-                        name="logradouro"
-                        value={Funcionario.endereco.logradouro}
-                        onChange={handleEnderecoChange}
-                    />
-                    {erros.logradouro && <div className="erro">{erros.logradouro}</div>}
-
-                    <label>Número</label>
-                    <input
-                        name="numero"
-                        maxLength={10000}
-                        value={Funcionario.endereco.numero}
-                        onChange={handleEnderecoChange}
-                    />
-                    {erros.numero && <div className="erro">{erros.numero}</div>}
-
-                    <label>Complemento</label>
-                    <input
-                        name="complemento"
-                        value={Funcionario.endereco.complemento}
-                        onChange={handleEnderecoChange}
-                    />
-
-                    <label>Cidade</label>
-                    <input
-                        name="cidade"
-                        value={Funcionario.endereco.cidade}
-                        onChange={handleEnderecoChange}
-                    />
-                    {erros.cidade && <div className="erro">{erros.cidade}</div>}
-
-                    <label>UF</label>
-                    <input
-                        name="uf"
-                        maxLength={2}
-                        value={Funcionario.endereco.uf}
-                        onChange={(e) =>
-                            handleEnderecoChange({
-                                target: { name: "uf", value: e.target.value.toUpperCase() }
-                            })
-                        }
-                    />
-                    {erros.uf && <div className="erro">{erros.uf}</div>}
-
-                    <label>CEP</label>
-                    <input
-                        name="cep"
-                        maxLength={8}
-                        value={Funcionario.endereco.cep}
-                        onChange={(e) =>
-                            handleEnderecoChange({
-                                target: { name: "cep", value: e.target.value.replace(/\D/g, "") }
-                            })
-                        }
-                    />
-                    {erros.cep && <div className="erro">{erros.cep}</div>}
-
-                    <div className="modal-actions">
-                        <button type="button" className="cancelar" onClick={onClose} disabled={salvando}>
-                            Cancelar
-                        </button>
-                        <button type="submit" disabled={salvando}>
-                            {salvando ? "Salvando..." : "Salvar"}
-                        </button>
-                    </div>
-                </form>
-            </ModalContent>
-        </ModalOverlay>
-    );
-}
-
-export default ModalCadastrarFuncionario;
-*/
-
-
 import React, { useState } from "react";
 import styled from "styled-components";
+
 const REACT_APP_PORT = process.env.REACT_APP_PORT;
 
 const ModalOverlay = styled.div`
@@ -392,409 +9,505 @@ const ModalOverlay = styled.div`
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 999;
-  padding: 20px;
+  z-index: 1000;
+  padding: 10px;
+  transition: opacity 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  opacity: ${({ isOpen }) => (isOpen ? 1 : 0)};
 `;
 
 const ModalContent = styled.div`
-  background: #fff;
-  padding: 20px;
-  border-radius: 8px;
-  width: 650px;
+  background: linear-gradient(145deg, #ffffff, #f9f9f9);
+  padding: 24px;
+  border-radius: 16px;
+  width: 40vw;
   max-height: 80vh;
   overflow-y: auto;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), 0 4px 16px rgba(0, 0, 0, 0.1);
   position: relative;
+  animation: fadeInScale 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 
-  h2 {
-    margin-bottom: 20px;
+  @keyframes fadeInScale {
+    from {
+      transform: scale(0.95);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  @media (max-width: 768px) {
+    padding: 16px;
+    max-width: 95%;
+    .form-row,
+    .address-grid {
+      display: block;
+    }
+  }
+
+  h2, h3 {
+    margin-bottom: 12px;
+    font-family: 'Roboto', sans-serif;
+    font-weight: 500;
+    color: #00796b;
   }
 
   .close-button {
     position: absolute;
-    top: 10px;
-    right: 10px;
+    top: 12px;
+    right: 12px;
     background: transparent;
     border: none;
-    font-size: 20px;
+    font-size: 26px;
     cursor: pointer;
-    color: #444;
+    color: #757575;
+    transition: color 0.2s, transform 0.2s;
+    &:hover {
+      color: #424242;
+      transform: scale(1.1);
+    }
   }
 
   label {
     display: block;
-    font-size: 14px;
-    margin-bottom: 5px;
-    margin-top: 10px;
+    font-size: 13px;
+    margin-bottom: 4px;
+    margin-top: 8px;
+    font-weight: bold; /* Títulos dos campos em negrito */
+    color: #424242;
   }
 
   input,
-  select {
+  select,
+  textarea {
     width: 100%;
-    padding: 8px;
-    margin-bottom: 5px;
-    border-radius: 4px;
-    border: 1px solid #ccc;
+    max-width: 100%;
+    padding: 10px 12px;
+    margin-bottom: 6px;
+    border-radius: 8px;
+    border: 1px solid #9e9e9e; /* Borda mais escura */
+    font-size: 15px;
+    background: #fff;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    &:focus {
+      border-color: #009688;
+      box-shadow: 0 0 0 2px rgba(0, 150, 136, 0.2);
+    }
   }
 
   textarea {
-    width: 100%;
-    padding: 8px;
-    border-radius: 4px;
-    border: 1px solid #ccc;
     resize: vertical;
+    min-height: 70px;
+    max-width: 100%;
+  }
+
+  .form-row {
+    display: flex;
+    gap: 16px;
+    > div {
+      flex: 1;
+      min-width: 0;
+    }
+  }
+
+  .address-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 16px;
+  }
+  
+  .address-row {
+    display: flex;
+    gap: 16px;
+    
+    .cep-field, .cidade-field, .uf-field {
+      flex: 1;
+    }
+    
+    @media (max-width: 768px) {
+      flex-direction: column;
+    }
+  }
+
+  .number-field {
+    max-width: 120px;
   }
 
   .modal-actions {
     display: flex;
     justify-content: flex-end;
-    gap: 10px;
+    gap: 12px;
     margin-top: 20px;
   }
 
-  button.cancelar {
-    background: #aaa;
+  button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 500;
+    transition: background 0.2s, transform 0.1s;
+    &:active {
+      transform: scale(0.98);
+    }
   }
 
-  button {
+  button.cancelar {
+    background: #e0e0e0;
+    color: #424242;
+    &:hover {
+      background: #bdbdbd;
+    }
+  }
+
+  button[type="submit"] {
     background: #009688;
     color: #fff;
-    padding: 10px 15px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
+    &:hover {
+      background: #00796b;
+    }
+    &:disabled {
+      background: #80cbc4;
+      cursor: not-allowed;
+    }
   }
 
   .erro {
-    color: red;
+    color: #d32f2f;
     font-size: 12px;
     margin-top: -4px;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
+    font-style: italic;
   }
 `;
 
 function ModalCadastrarFuncionario({ onClose, onSalvou }) {
-    const [funcionario, setFuncionario] = useState({
-        nome: "",
-        telefone: "",
-        email: "",
-        cpf: "",
-        perfil: "",
-        senhaHash: "",
-        dataNascimento: "",
-        ativo: true,
+  const [funcionario, setFuncionario] = useState({
+    nome: "",
+    telefone: "",
+    email: "",
+    cpf: "",
+    perfil: "",
+    senhaHash: "",
+    dataNascimento: "",
+    ativo: true,
+    endereco: {
+      logradouro: "",
+      numero: "",
+      complemento: "",
+      cidade: "",
+      uf: "",
+      cep: ""
+    }
+  });
+  const [erros, setErros] = useState({});
+  const [salvando, setSalvando] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFuncionario({ ...funcionario, [name]: value });
+  };
+
+  const handleEnderecoChange = (e) => {
+    const { name, value } = e.target;
+    setFuncionario((prev) => ({
+      ...prev,
+      endereco: { ...prev.endereco, [name]: value }
+    }));
+  };
+
+  const validar = () => {
+    const novosErros = {};
+    const cepSemFormatacao = funcionario.endereco.cep.replace(/\D/g, '');
+
+    if (!funcionario.nome.trim()) novosErros.nome = "O nome é obrigatório.";
+    if (!funcionario.telefone.replace(/\D/g, '').length) novosErros.telefone = "O telefone é obrigatório.";
+    else if (funcionario.telefone.replace(/\D/g, '').length !== 11) novosErros.telefone = "O telefone deve ter 11 números.";
+    if (!funcionario.email.trim()) novosErros.email = "O e-mail é obrigatório.";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(funcionario.email)) novosErros.email = "E-mail inválido.";
+    if (!funcionario.cpf.replace(/\D/g, '').length) novosErros.cpf = "O CPF é obrigatório.";
+    else if (funcionario.cpf.replace(/\D/g, '').length !== 11) novosErros.cpf = "O CPF deve ter 11 números.";
+    if (!funcionario.dataNascimento.trim()) novosErros.dataNascimento = "A data de nascimento é obrigatória.";
+    if (!funcionario.perfil) novosErros.perfil = "O perfil é obrigatório.";
+    if (!funcionario.senhaHash) novosErros.senhaHash = "A senha é obrigatória.";
+    if (!funcionario.endereco.logradouro.trim()) novosErros.logradouro = "O logradouro é obrigatório.";
+    if (!funcionario.endereco.numero) novosErros.numero = "O número é obrigatório.";
+    if (!funcionario.endereco.cidade.trim()) novosErros.cidade = "A cidade é obrigatória.";
+    if (!funcionario.endereco.uf) novosErros.uf = "O UF é obrigatório.";
+    else if (!/^[A-Za-z]{2}$/.test(funcionario.endereco.uf)) novosErros.uf = "O UF deve ter exatamente 2 letras.";
+    if (!cepSemFormatacao) novosErros.cep = "O CEP é obrigatório.";
+    else if (cepSemFormatacao.length !== 8) novosErros.cep = "O CEP deve ter exatamente 8 números.";
+
+    setErros(novosErros);
+    return Object.keys(novosErros).length === 0;
+  };
+
+  async function salvarFuncionario(e) {
+    e.preventDefault();
+    if (!validar()) return;
+
+    setSalvando(true);
+    try {
+      const dadosParaEnvio = {
+        ...funcionario,
+        ativo: Boolean(funcionario.ativo),
+        dataNascimento: funcionario.dataNascimento
+          ? new Date(funcionario.dataNascimento).toISOString()
+          : null,
         endereco: {
-            logradouro: "",
-            numero: "",
-            complemento: "",
-            cidade: "",
-            uf: "",
-            cep: ""
+          ...funcionario.endereco,
+          cep: funcionario.endereco.cep.replace(/\D/g, '')
         }
-    });
-    const [erros, setErros] = useState({});
-    const [salvando, setSalvando] = useState(false);
-    const [apiError, setApiError] = useState(null);
-
-    function validar() {
-        const novosErros = {};
-
-        // Nome obrigatório
-        if (!funcionario.nome.trim()) {
-            novosErros.nome = "O nome é obrigatório.";
-        }
-
-        // Telefone - exatamente 11 dígitos
-        if (!funcionario.telefone) {
-            novosErros.telefone = "O telefone é obrigatório.";
-        } else if (funcionario.telefone.length !== 11) {
-            novosErros.telefone = "O telefone deve ter exatamente 11 números.";
-        }
-
-        // E-mail válido
-        if (!funcionario.email.trim()) {
-            novosErros.email = "O e-mail é obrigatório.";
-        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(funcionario.email)) {
-            novosErros.email = "E-mail inválido.";
-        }
-
-        // CPF - exatamente 11 dígitos
-        if (!funcionario.cpf) {
-            novosErros.cpf = "O CPF é obrigatório.";
-        } else if (funcionario.cpf.length !== 11) {
-            novosErros.cpf = "O CPF deve ter exatamente 11 números.";
-        }
-
-        // Data de Nascimento obrigatória
-        if (!funcionario.dataNascimento.trim()) {
-            novosErros.dataNascimento = "A data de nascimento é obrigatória.";
-        }
-
-        // Perfil obrigatório
-        if (!funcionario.perfil) {
-            novosErros.perfil = "O Perfil é obrigatório";
-        }
-
-        // Senha obrigatória
-        if (!funcionario.senhaHash) {
-            novosErros.senhaHash = "A senha é obrigatória";
-        }
-
-        // Logradouro obrigatório
-        if (!funcionario.endereco.logradouro.trim()) {
-            novosErros.logradouro = "O logradouro é obrigatório.";
-        }
-
-        // Número - exatamente 2 caracteres
-        if (!funcionario.endereco.numero) {
-            novosErros.numero = "O número é obrigatório.";
-        }
-
-        // Cidade obrigatória
-        if (!funcionario.endereco.cidade.trim()) {
-            novosErros.cidade = "A cidade é obrigatória.";
-        }
-
-        // UF - exatamente 2 letras
-        if (!funcionario.endereco.uf) {
-            novosErros.uf = "O UF é obrigatório.";
-        } else if (!/^[A-Za-z]{2}$/.test(funcionario.endereco.uf)) {
-            novosErros.uf = "O UF deve ter exatamente 2 letras.";
-        }
-
-        // CEP - exatamente 8 números
-        if (!funcionario.endereco.cep) {
-            novosErros.cep = "O CEP é obrigatório.";
-        } else if (!/^\d{8}$/.test(funcionario.endereco.cep)) {
-            novosErros.cep = "O CEP deve ter exatamente 8 números.";
-        }
-
-        setErros(novosErros);
-        return Object.keys(novosErros).length === 0;
-    }
-
-    async function salvarFuncionario(e) {
-        e.preventDefault();
-        if (!validar()) return;
-
-        setSalvando(true);
-        setApiError(null);
-        
+      };
+      
+      const resp = await fetch(`http://localhost:${REACT_APP_PORT}/api/funcionarios`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(dadosParaEnvio)
+      });
+      
+      if (!resp.ok) {
+        let errorMessage = `Erro HTTP ${resp.status}`;
         try {
-            // Preparar os dados para envio - CORREÇÃO PRINCIPAL
-            const dadosParaEnvio = {
-                ...funcionario,
-                // Converter ativo para booleano
-                ativo: Boolean(funcionario.ativo),
-                // Converter data para o formato esperado
-                dataNascimento: funcionario.dataNascimento 
-                    ? new Date(funcionario.dataNascimento).toISOString() 
-                    : null
-            };
-            
-            // CORREÇÃO DO ENDPOINT - usando o mesmo padrão dos outros métodos
-            const resp = await fetch(`http://localhost:${REACT_APP_PORT}/api/funcionarios`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(dadosParaEnvio)
-            });
-            
-            if (!resp.ok) {
-                // Tratamento detalhado de erros
-                let errorMessage = `Erro HTTP ${resp.status}`;
-                try {
-                    const errorData = await resp.json();
-                    errorMessage = errorData.message || errorData.title || JSON.stringify(errorData);
-                } catch (e) {
-                    const text = await resp.text().catch(() => "");
-                    errorMessage = text || errorMessage;
-                }
-                throw new Error(errorMessage);
-            }
-            
-            alert("Funcionário cadastrado com sucesso!");
-            if (typeof onSalvou === "function") onSalvou();
-            onClose();
-        } catch (error) {
-            console.error("Erro ao cadastrar funcionário", error);
-            // Mostrar mensagem de erro mais específica
-            setApiError(`Erro ao cadastrar funcionário: ${error.message}`);
-        } finally {
-            setSalvando(false);
+          const errorData = await resp.json();
+          errorMessage = errorData.message || errorData.title || JSON.stringify(errorData);
+        } catch (e) {
+          const text = await resp.text().catch(() => "");
+          errorMessage = text || errorMessage;
         }
+        throw new Error(errorMessage);
+      }
+      
+      alert("Funcionário cadastrado com sucesso!");
+      if (typeof onSalvou === "function") onSalvou();
+      handleClose();
+    } catch (error) {
+      console.error("Erro ao cadastrar funcionário", error);
+      alert(`Erro ao cadastrar funcionário: ${error.message}`);
+    } finally {
+      setSalvando(false);
     }
+  }
 
-    function handleEnderecoChange(e) {
-        const { name, value } = e.target;
-        setFuncionario((prev) => ({
-            ...prev,
-            endereco: { ...prev.endereco, [name]: value }
-        }));
-    }
+  function handleClose() {
+    setIsOpen(false);
+    setTimeout(onClose, 400);
+  }
 
-    return (
-        <ModalOverlay onClick={onClose}>
-            <ModalContent onClick={(e) => e.stopPropagation()}>
-                <button type="button" className="close-button" onClick={onClose}>
-                    ×
-                </button>
-                <h2>Cadastrar Funcionário</h2>
+  return (
+    <ModalOverlay onClick={handleClose} isOpen={isOpen}>
+      <ModalContent onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <button type="button" className="close-button" onClick={handleClose} aria-label="Fechar modal">
+          ×
+        </button>
+        <h2 id="modal-title">Cadastrar Funcionário</h2>
 
-                {/* Exibir erro da API se houver */}
-                {apiError && (
-                    <div className="erro" style={{ marginBottom: '10px' }}>
-                        {apiError}
-                    </div>
-                )}
+        <form onSubmit={salvarFuncionario}>
+          <label htmlFor="nome">Nome</label>
+          <input
+            id="nome"
+            name="nome"
+            placeholder="Nome completo"
+            value={funcionario.nome}
+            onChange={handleChange}
+          />
+          {erros.nome && <div className="erro">{erros.nome}</div>}
 
-                <form onSubmit={salvarFuncionario}>
-                    <label>Nome</label>
-                    <input
-                        value={funcionario.nome}
-                        onChange={(e) => setFuncionario({ ...funcionario, nome: e.target.value })}
-                    />
-                    {erros.nome && <div className="erro">{erros.nome}</div>}
+          <div className="form-row">
+            <div>
+              <label htmlFor="telefone">Telefone</label>
+              <input
+                id="telefone"
+                name="telefone"
+                placeholder="11987654321"
+                maxLength={11}
+                value={funcionario.telefone}
+                onChange={(e) =>
+                  setFuncionario({ ...funcionario, telefone: e.target.value.replace(/\D/g, "") })
+                }
+              />
+              {erros.telefone && <div className="erro">{erros.telefone}</div>}
+            </div>
+            <div>
+              <label htmlFor="email">E-mail</label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                placeholder="exemplo@email.com"
+                value={funcionario.email}
+                onChange={handleChange}
+              />
+              {erros.email && <div className="erro">{erros.email}</div>}
+            </div>
+          </div>
 
-                    <label>Telefone</label>
-                    <input
-                        value={funcionario.telefone}
-                        maxLength={11}
-                        onChange={(e) =>
-                            setFuncionario({ ...funcionario, telefone: e.target.value.replace(/\D/g, "") })
-                        }
-                    />
-                    {erros.telefone && <div className="erro">{erros.telefone}</div>}
+          <div className="form-row">
+            <div>
+              <label htmlFor="cpf">CPF</label>
+              <input
+                id="cpf"
+                name="cpf"
+                placeholder="12345678901"
+                maxLength={11}
+                value={funcionario.cpf}
+                onChange={(e) =>
+                  setFuncionario({ ...funcionario, cpf: e.target.value.replace(/\D/g, "") })
+                }
+              />
+              {erros.cpf && <div className="erro">{erros.cpf}</div>}
+            </div>
+            <div>
+              <label htmlFor="dataNascimento">Data de Nascimento</label>
+              <input
+                id="dataNascimento"
+                name="dataNascimento"
+                type="date"
+                value={funcionario.dataNascimento}
+                onChange={handleChange}
+              />
+              {erros.dataNascimento && <div className="erro">{erros.dataNascimento}</div>}
+            </div>
+          </div>
+          
+          <div className="form-row">
+            <div>
+              <label htmlFor="perfil">Perfil</label>
+              <select
+                id="perfil"
+                name="perfil"
+                value={funcionario.perfil}
+                onChange={handleChange}
+              >
+                <option value="">Selecione um perfil</option>
+                <option value="admin">Administrador</option>
+                <option value="funcionario">Funcionário</option>
+              </select>
+              {erros.perfil && <div className="erro">{erros.perfil}</div>}
+            </div>
+            <div>
+              <label htmlFor="senhaHash">Senha</label>
+              <input
+                id="senhaHash"
+                name="senhaHash"
+                type="password"
+                placeholder="********"
+                value={funcionario.senhaHash}
+                onChange={handleChange}
+              />
+              {erros.senhaHash && <div className="erro">{erros.senhaHash}</div>}
+            </div>
+          </div>
 
-                    <label>E-mail</label>
-                    <input
-                        type="email"
-                        value={funcionario.email}
-                        onChange={(e) => setFuncionario({ ...funcionario, email: e.target.value })}
-                    />
-                    {erros.email && <div className="erro">{erros.email}</div>}
+          <label htmlFor="ativo">Status</label>
+          <select
+            id="ativo"
+            name="ativo"
+            value={String(funcionario.ativo)}
+            onChange={(e) => setFuncionario({ ...funcionario, ativo: e.target.value === "true" })}
+          >
+            <option value="true">Ativo</option>
+            <option value="false">Inativo</option>
+          </select>
 
-                    <label>CPF</label>
-                    <input
-                        value={funcionario.cpf}
-                        maxLength={11}
-                        onChange={(e) =>
-                            setFuncionario({ ...funcionario, cpf: e.target.value.replace(/\D/g, "") })
-                        }
-                    />
-                    {erros.cpf && <div className="erro">{erros.cpf}</div>}
+          <h3>Endereço</h3>
+          <div className="form-row">
+            <div>
+              <label htmlFor="logradouro">Logradouro</label>
+              <input
+                id="logradouro"
+                name="logradouro"
+                placeholder="Rua Exemplo"
+                value={funcionario.endereco.logradouro}
+                onChange={handleEnderecoChange}
+              />
+              {erros.logradouro && <div className="erro">{erros.logradouro}</div>}
+            </div>
+            <div className="number-field">
+              <label htmlFor="numero">Número</label>
+              <input
+                id="numero"
+                name="numero"
+                placeholder="123"
+                value={funcionario.endereco.numero}
+                onChange={handleEnderecoChange}
+              />
+              {erros.numero && <div className="erro">{erros.numero}</div>}
+            </div>
+          </div>
+          <label htmlFor="complemento">Complemento</label>
+          <input
+            id="complemento"
+            name="complemento"
+            placeholder="Apt 456 (opcional)"
+            value={funcionario.endereco.complemento}
+            onChange={handleEnderecoChange}
+          />
+          <div className="form-row">
+            <div className="cep-field">
+              <label htmlFor="cep">CEP</label>
+              <input
+                id="cep"
+                name="cep"
+                placeholder="12345678"
+                maxLength={8}
+                value={funcionario.endereco.cep}
+                onChange={(e) =>
+                  handleEnderecoChange({
+                    target: { name: "cep", value: e.target.value.replace(/\D/g, "") }
+                  })
+                }
+              />
+              {erros.cep && <div className="erro">{erros.cep}</div>}
+            </div>
+            <div className="cidade-field">
+              <label htmlFor="cidade">Cidade</label>
+              <input
+                id="cidade"
+                name="cidade"
+                placeholder="São Paulo"
+                value={funcionario.endereco.cidade}
+                onChange={handleEnderecoChange}
+              />
+              {erros.cidade && <div className="erro">{erros.cidade}</div>}
+            </div>
+            <div className="uf-field">
+              <label htmlFor="uf">UF</label>
+              <input
+                id="uf"
+                name="uf"
+                placeholder="SP"
+                maxLength={2}
+                value={funcionario.endereco.uf}
+                onChange={(e) =>
+                  handleEnderecoChange({
+                    target: { name: "uf", value: e.target.value.toUpperCase() }
+                  })
+                }
+              />
+              {erros.uf && <div className="erro">{erros.uf}</div>}
+            </div>
+          </div>
 
-                    <label>Data de Nascimento</label>
-                    <input
-                        type="date"
-                        value={funcionario.dataNascimento}
-                        onChange={(e) => setFuncionario({ ...funcionario, dataNascimento: e.target.value })}
-                    />
-                    {erros.dataNascimento && <div className="erro">{erros.dataNascimento}</div>}
-
-                    <label>Senha</label>
-                    <input
-                        type="password"
-                        value={funcionario.senhaHash}
-                        onChange={(e) => setFuncionario({ ...funcionario, senhaHash: e.target.value })}
-                    />
-                    {erros.senhaHash && <div className="erro">{erros.senhaHash}</div>}
-
-                    <label>Perfil</label>
-                    <select
-                        id="perfil"
-                        value={funcionario.perfil}
-                        onChange={(e) => setFuncionario({ ...funcionario, perfil: e.target.value })}
-                    >
-                        <option value="">Selecione um perfil</option>
-                        <option value="admin">Administrador</option>
-                        <option value="funcionario">Funcionário</option>
-                    </select>
-                    {erros.perfil && <div className="erro">{erros.perfil}</div>}
-
-                    <label>Status</label>
-                    <select
-                        value={String(funcionario.ativo)}
-                        onChange={(e) => setFuncionario({ ...funcionario, ativo: e.target.value === "true" })}
-                    >
-                        <option value="true">Ativo</option>
-                        <option value="false">Inativo</option>
-                    </select>
-
-                    <h3>Endereço</h3>
-                    <label>Logradouro</label>
-                    <input
-                        name="logradouro"
-                        value={funcionario.endereco.logradouro}
-                        onChange={handleEnderecoChange}
-                    />
-                    {erros.logradouro && <div className="erro">{erros.logradouro}</div>}
-
-                    <label>Número</label>
-                    <input
-                        name="numero"
-                        maxLength={10000}
-                        value={funcionario.endereco.numero}
-                        onChange={handleEnderecoChange}
-                    />
-                    {erros.numero && <div className="erro">{erros.numero}</div>}
-
-                    <label>Complemento</label>
-                    <input
-                        name="complemento"
-                        value={funcionario.endereco.complemento}
-                        onChange={handleEnderecoChange}
-                    />
-
-                    <label>Cidade</label>
-                    <input
-                        name="cidade"
-                        value={funcionario.endereco.cidade}
-                        onChange={handleEnderecoChange}
-                    />
-                    {erros.cidade && <div className="erro">{erros.cidade}</div>}
-
-                    <label>UF</label>
-                    <input
-                        name="uf"
-                        maxLength={2}
-                        value={funcionario.endereco.uf}
-                        onChange={(e) =>
-                            handleEnderecoChange({
-                                target: { name: "uf", value: e.target.value.toUpperCase() }
-                            })
-                        }
-                    />
-                    {erros.uf && <div className="erro">{erros.uf}</div>}
-
-                    <label>CEP</label>
-                    <input
-                        name="cep"
-                        maxLength={8}
-                        value={funcionario.endereco.cep}
-                        onChange={(e) =>
-                            handleEnderecoChange({
-                                target: { name: "cep", value: e.target.value.replace(/\D/g, "") }
-                            })
-                        }
-                    />
-                    {erros.cep && <div className="erro">{erros.cep}</div>}
-
-                    <div className="modal-actions">
-                        <button type="button" className="cancelar" onClick={onClose} disabled={salvando}>
-                            Cancelar
-                        </button>
-                        <button type="submit" disabled={salvando}>
-                            {salvando ? "Salvando..." : "Salvar"}
-                        </button>
-                    </div>
-                </form>
-            </ModalContent>
-        </ModalOverlay>
-    );
+          <div className="modal-actions">
+            <button type="button" className="cancelar" onClick={handleClose} disabled={salvando}>
+              Cancelar
+            </button>
+            <button type="submit" disabled={salvando}>
+              {salvando ? "Salvando..." : "Salvar"}
+            </button>
+          </div>
+        </form>
+      </ModalContent>
+    </ModalOverlay>
+  );
 }
 
 export default ModalCadastrarFuncionario;
