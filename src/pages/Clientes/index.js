@@ -140,7 +140,16 @@ function Clientes() {
   const fetchClientes = async () => {
     try {
       const response = await axios.get(`http://localhost:${REACT_APP_PORT}/api/clientes`);
-      setClientes(response.data.data?.$values || response.data || []);
+
+      // 🔧 Normalização do payload (mantém compatível com vários formatos)
+      const toList = (payload) =>
+        Array.isArray(payload?.data)
+          ? payload.data
+          : Array.isArray(payload)
+          ? payload
+          : (payload?.data?.$values ?? payload?.$values ?? []);
+
+      setClientes(toList(response.data));
     } catch (error) {
       console.error("Erro ao buscar clientes:", error);
     }

@@ -75,6 +75,9 @@ function ModalNovoAtendimento({ onClose }) {
         setFuncionarios(resFuncionarios ?? []);
       } catch (error) {
         console.error("Erro ao carregar dados:", error);
+        setClientes([]);
+        setServicos([]);
+        setFuncionarios([]);
       }
     }
     fetchData();

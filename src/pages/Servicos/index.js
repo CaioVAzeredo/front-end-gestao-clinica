@@ -4,7 +4,7 @@ import axios from "axios";
 import styled from "styled-components";
 import ModalCadastrarServico from "../../components/ModalCadastrarServico";
 import ModalAtualizarServico from "../../components/ModalAtualizarServico";
-import ModalCadastrarCategoria from "../../components/ModalCadastrarCategoria"; // 1. Importa o novo modal
+import ModalCadastrarCategoria from "../../components/ModalCadastrarCategoria";
 
 const REACT_APP_PORT = process.env.REACT_APP_PORT;
 
@@ -15,141 +15,38 @@ const formatDuration = (totalMinutes) => {
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
   const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes;
-
-  if (hours > 0) {
-    return `${hours}h ${formattedMinutes}m`;
-  } else {
-    return `${formattedMinutes}m`;
-  }
+  return hours > 0 ? `${hours}h ${formattedMinutes}m` : `${formattedMinutes}m`;
 };
 
 const Container = styled.div`
   display: flex;
   height: 100vh;
 
-  .conteudo {
-    flex: 1;
-    padding: 20px;
-  }
+  .conteudo { flex: 1; padding: 20px; }
+  .topo { display: flex; justify-content: flex-start; align-items: center; margin-bottom: 20px; gap: 10px; }
 
-  .topo {
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    margin-bottom: 20px;
-    gap: 10px; /* Adiciona um espaçamento entre os botões */
-  }
+  table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; }
+  table th, table td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
+  table th { background: #f5f5f5; }
 
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    background: #fff;
-    border-radius: 8px;
-    overflow: hidden;
-  }
+  .btn { padding: 8px 12px; border: none; border-radius: 5px; cursor: pointer; }
+  .btn-novo { background: #00a884; color: white; }
+  .btn-editar { background: #ffc107; margin-right: 8px; color: #000; }
+  .btn-excluir { background: #dc3545; color: white; }
+  .btn-categoria { background: #00a884; color: white; }
 
-  table th,
-  table td {
-    padding: 12px;
-    border-bottom: 1px solid #eee;
-    text-align: left;
-  }
-
-  table th {
-    background: #f5f5f5;
-  }
-
-  .btn {
-    padding: 8px 12px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-  }
-
-  .btn-novo {
-    background: #00a884;
-    color: white;
-  }
-
-  .btn-editar {
-    background: #ffc107;
-    margin-right: 8px;
-    color: #000;
-  }
-
-  .btn-excluir {
-    background: #dc3545;
-    color: white;
-  }
-  
-  .btn-categoria {
-    background: #00a884; /* Mesma cor do btn-novo para manter o padrão */
-    color: white;
-  }
-
-
-  .paginacao {
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    margin-top: 10px;
-    gap: 10px;
-  }
-
-  .paginacao select,
-  .paginacao button {
-    padding: 5px 10px;
-    border-radius: 4px;
-    border: 1px solid #ccc;
-    cursor: pointer;
-  }
-
-  .paginacao span {
-    font-size: 14px;
-  }
+  .paginacao { display: flex; justify-content: flex-end; align-items: center; margin-top: 10px; gap: 10px; }
+  .paginacao select, .paginacao button { padding: 5px 10px; border-radius: 4px; border: 1px solid #ccc; cursor: pointer; }
+  .paginacao span { font-size: 14px; }
 
   @media (max-width: 768px) {
-    table {
-      border: 0;
-    }
-
-    table thead {
-      display: none;
-    }
-
-    table tbody tr {
-      display: block;
-      margin-bottom: 15px;
-      background: #fff;
-      border-radius: 8px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-      padding: 10px;
-    }
-
-    table tbody td {
-      display: flex;
-      justify-content: space-between;
-      padding: 8px 5px;
-      font-size: 14px;
-      border: none;
-      word-break: break-word;
-    }
-
-    table tbody td::before {
-      content: attr(data-label);
-      font-weight: bold;
-      flex: 1;
-      text-align: left;
-    }
-
-    table tbody td[data-label="Ações"] {
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    table tbody td[data-label="Ações"] button {
-      width: 100%;
-    }
+    table { border: 0; }
+    table thead { display: none; }
+    table tbody tr { display: block; margin-bottom: 15px; background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 10px; }
+    table tbody td { display: flex; justify-content: space-between; padding: 8px 5px; font-size: 14px; border: none; word-break: break-word; }
+    table tbody td::before { content: attr(data-label); font-weight: bold; flex: 1; text-align: left; }
+    table tbody td[data-label="Ações"] { flex-direction: column; gap: 8px; }
+    table tbody td[data-label="Ações"] button { width: 100%; }
   }
 `;
 
@@ -161,15 +58,24 @@ function Servicos() {
   const [showModalAtualizar, setShowModalAtualizar] = useState(false);
   const [servicoEditando, setServicoEditando] = useState(null);
   const [excluindo, setExcluindo] = useState(false);
-  // 2. Novo estado para o modal de categoria
   const [showModalCategoria, setShowModalCategoria] = useState(false);
 
   const fetchServicos = async () => {
     try {
       const response = await axios.get(`http://localhost:${REACT_APP_PORT}/api/servicos`);
-      setServicos(response.data.data?.$values || response.data || []);
+      const payload = response.data;
+
+      // Normaliza para array em todos os formatos comuns
+      const lista = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload?.data)
+        ? payload.data
+        : payload?.data?.$values ?? payload?.$values ?? [];
+
+      setServicos(lista);
     } catch (error) {
       console.error("Erro ao buscar serviços:", error);
+      setServicos([]);
     }
   };
 
@@ -183,8 +89,7 @@ function Servicos() {
     setServicoEditando(servico);
     setShowModalAtualizar(true);
   };
-  
-  // Nova função para abrir o modal de categoria
+
   const handleAdicionarCategoria = () => setShowModalCategoria(true);
 
   const handleExcluir = async (id) => {
@@ -269,7 +174,7 @@ function Servicos() {
                 <td data-label="Categoria">{servico.categoria?.nomeCategoria || "Sem categoria"}</td>
                 <td data-label="Serviço">{servico.nomeServico}</td>
                 <td data-label="Duração">{formatDuration(servico.duracaoEstimada)}</td>
-                <td data-label="Preço">R$ {servico.preco?.toFixed(2)}</td>
+                <td data-label="Preço">R$ {Number(servico.preco ?? 0).toFixed(2)}</td>
                 <td data-label="Ações">
                   <button
                     type="button"

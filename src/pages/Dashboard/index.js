@@ -49,19 +49,30 @@ const Container = styled.div`
 
   .list-item {
     flex: 0 0 auto;
-    min-width: 200px;
+    min-width: 240px;
     border: 1px solid #f0f0f0;
     border-radius: 6px;
     padding: 12px;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 6px;
     background: #fafafa;
     font-size: 14px;
   }
 
-  .list-item span:first-child {
+  .line-label {
     font-weight: bold;
+  }
+
+  .delete-btn {
+    margin-top: 10px;
+    align-self: center;      /* centraliza horizontalmente */
+    background: #e53935;
+    color: #fff;
+    padding: 8px 14px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
   }
 
   @media (max-width: 480px) {
@@ -127,6 +138,7 @@ const Container = styled.div`
 
 function Dashboard({ setPagina, setTitulo }) {
   const [dados, setDados] = useState(null);
+  const [funcMap, setFuncMap] = useState({}); // idFuncionario -> nome
   const [showModal, setShowModal] = useState(false);
   const [showModalAtendimento, setShowModalAtendimento] = useState(false);
 
@@ -135,33 +147,101 @@ function Dashboard({ setPagina, setTitulo }) {
     setTitulo("Relatórios");
   }
 
+  async function handleExcluirAgendamento(ag) {
+    const id =
+      ag?.idAgendamento ?? ag?.id ?? ag?.agendamentoId;
+
+    if (!id) {
+      alert("Não foi possível identificar o ID do agendamento.");
+      return;
+    }
+
+    if (!window.confirm("Tem certeza que deseja excluir este agendamento?")) return;
+
+
+    try {
+      const resp = await fetch(
+        `http://localhost:${REACT_APP_PORT}/api/agendamentos/${id}`,
+        { method: "DELETE" }
+      );
+
+      if (!resp.ok) {
+        const txt = await resp.text().catch(() => "");
+        throw new Error(`Falha ao excluir. Status ${resp.status}. ${txt}`);
+      }
+
+      // remove da lista local (proximos)
+      setDados(prev => {
+        const novosProximos = (prev?.proximos ?? []).filter(a => {
+          const aid = a?.idAgendamento ?? a?.id ?? a?.agendamentoId;
+          return aid !== id;
+        });
+        return { ...prev, proximos: novosProximos };
+      });
+    } catch (e) {
+      console.error(e);
+      alert("Erro ao excluir o agendamento.");
+    }
+  }
+
   useEffect(() => {
     const fetchDados = async () => {
-      const agendamentos = await fetch(`http://localhost:${REACT_APP_PORT}/api/agendamentos`).then(res => res.json());
-      const clientes = await fetch(`http://localhost:${REACT_APP_PORT}/api/clientes`).then(res => res.json());
-      const servicos = await fetch(`http://localhost:${REACT_APP_PORT}/api/servicos`).then(res => res.json());
+      const [agendamentos, clientes, servicos, funcionarios] = await Promise.all([
+        fetch(`http://localhost:${REACT_APP_PORT}/api/agendamentos`).then(res => res.json()).catch(() => ({})),
+        fetch(`http://localhost:${REACT_APP_PORT}/api/clientes`).then(res => res.json()).catch(() => ({})),
+        fetch(`http://localhost:${REACT_APP_PORT}/api/servicos`).then(res => res.json()).catch(() => ({})),
+        fetch(`http://localhost:${REACT_APP_PORT}/api/funcionarios`).then(res => res.json()).catch(() => ({})),
+      ]);
+
+      const listaAg = Array.isArray(agendamentos?.data)
+        ? agendamentos.data
+        : (agendamentos?.data?.$values ?? []);
+
+      const listaClientes = Array.isArray(clientes?.data)
+        ? clientes.data
+        : (clientes?.data?.$values ?? []);
+
+      const listaFuncs = Array.isArray(funcionarios?.data)
+        ? funcionarios.data
+        : (funcionarios?.data?.$values ?? []);
+
+      // Cria mapa idFuncionario -> nome
+      const mapa = {};
+      for (const f of (listaFuncs ?? [])) {
+        const id = f?.idFuncionario ?? f?.id ?? f?.funcionarioId;
+        const nome = f?.nome ?? f?.name ?? "Sem nome";
+        if (id != null) mapa[id] = nome;
+      }
+      setFuncMap(mapa);
 
       const hoje = new Date().toDateString();
 
-      const atendimentosHoje = agendamentos.data.filter(
+      const atendimentosHoje = (listaAg ?? []).filter(
         a => new Date(a.dataHoraInicio).toDateString() === hoje
       ).length;
 
-      const totalHorariosDisponiveisHoje = 8; 
+      const totalHorariosDisponiveisHoje = 8;
       const taxaOcupacao = ((atendimentosHoje / totalHorariosDisponiveisHoje) * 100).toFixed(1);
 
-      const clientesNovos = clientes.data.filter(
-        c => new Date(c.dataCriacao) >= new Date(new Date().setDate(new Date().getDate() - 7))
-      ).length;
+      const clientesNovos = (listaClientes ?? []).filter(c => {
+        const dc = c?.dataCriacao ? new Date(c.dataCriacao) : null;
+        const seteDiasAtras = new Date(new Date().setDate(new Date().getDate() - 7));
+        return dc && dc >= seteDiasAtras;
+      }).length;
 
-      const receitaMes = agendamentos.data.reduce((acc, ag) => acc + (ag.servico?.preco || 0), 0);
+      const receitaMes = (listaAg ?? []).reduce((acc, ag) => acc + (ag.servico?.preco || 0), 0);
+
+      // Ordena agendamentos por data/hora e pega os próximos 5
+      const proximos = [...(listaAg ?? [])]
+        .sort((a, b) => new Date(a.dataHoraInicio) - new Date(b.dataHoraInicio))
+        .slice(0, 5);
 
       setDados({
         atendimentosHoje,
         clientesNovos,
         taxaOcupacao,
         receitaMes,
-        proximos: agendamentos.data.slice(0, 5),
+        proximos,
       });
     };
 
@@ -208,14 +288,41 @@ function Dashboard({ setPagina, setTitulo }) {
                 hour: "2-digit",
                 minute: "2-digit"
               });
-              const nome = ag.cliente?.nome || "Sem nome";
-              const servico = ag.servico?.nomeServico || "Sem serviço";
+
+              const nomeCliente = ag?.cliente?.nome ?? "Sem nome";
+              const nomeServico = ag?.servico?.nomeServico ?? "Sem serviço";
+
+              // Resolve nome do funcionário (aninhado ou via mapa pelo funcionarioId)
+              const funcNome =
+                ag?.funcionario?.nome
+                ?? (funcMap[ag?.funcionarioId] ?? "Sem funcionário");
 
               return (
                 <div key={index} className="list-item">
-                  <span>{hora}</span>
-                  <span>{nome}</span>
-                  <span>{servico}</span>
+                  <div>
+                    <span className="line-label">hora do atendimento: </span>
+                    <span>{hora}</span>
+                  </div>
+                  <div>
+                    <span className="line-label">cliente: </span>
+                    <span>{nomeCliente}</span>
+                  </div>
+                  <div>
+                    <span className="line-label">funcionário: </span>
+                    <span>{funcNome}</span>
+                  </div>
+                  <div>
+                    <span className="line-label">serviço: </span>
+                    <span>{nomeServico}</span>
+                  </div>
+
+                  <button
+                    className="delete-btn"
+                    onClick={() => handleExcluirAgendamento(ag)}
+                    title="Excluir agendamento"
+                  >
+                    Excluir
+                  </button>
                 </div>
               );
             })
