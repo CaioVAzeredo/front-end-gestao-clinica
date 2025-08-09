@@ -200,17 +200,7 @@ function Funcionarios() {
       setExcluindo(true);
       try {
         await axios.delete(`http://localhost:${REACT_APP_PORT}/api/funcionarios/${id}`);
-<<<<<<< HEAD
-        // Recarrega a lista
-        await fetchFuncionarios();
-        // Ajusta a página se necessário (ex.: se a página atual ficar vazia)
-        const totalPagesAtualizado = Math.ceil((funcionarios.length - 1) / rowsPerPage);
-        if (page > totalPagesAtualizado) {
-          setPage(Math.max(1, totalPagesAtualizado));
-        }
-=======
         fetchFuncionarios();
->>>>>>> 9fe1838bb890945febb45e8f86b56299b5d42cea
       } catch (error) {
         console.error("Erro ao excluir o funcionário:", error);
         alert("Erro ao excluir o funcionário. Verifique se o ID existe ou tente novamente.");

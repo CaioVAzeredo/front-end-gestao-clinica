@@ -120,7 +120,7 @@ const PageContent = styled.div`
 
 /* === Badge do usuário (topo direito) === */
 const UserBadge = styled.div`
-  position: fixed;        /* fica por cima, independente do Header */
+  position: fixed;
   top: 12px;
   right: 16px;
   z-index: 1101;
@@ -131,6 +131,11 @@ const UserBadge = styled.div`
   border-radius: 999px;
   padding: 6px 12px;
   box-shadow: 0 2px 8px rgba(0,0,0,.08);
+  cursor: pointer; /* para indicar que é clicável */
+
+  &:hover {
+    background: #f0f0f0;
+  }
 
   @media (max-width: 768px) {
     top: 8px;
@@ -200,13 +205,11 @@ function PaginaBase() {
   const [showSidebarMobile, setShowSidebarMobile] = useState(false);
   const [token, setToken] = useState(null);
 
-  // pega o nome salvo (ajuste a chave se precisar)
   const nomeUsuario =
     localStorage.getItem("nome") ||
     localStorage.getItem("usuarioNome") ||
     "Usuário";
 
-  // gera iniciais
   const getInitials = (nome) => {
     if (!nome || typeof nome !== "string") return "U";
     const parts = nome.trim().split(/\s+/).filter(Boolean);
@@ -262,7 +265,6 @@ function PaginaBase() {
 
   return (
     <Layout>
-      {/* Header original, sem precisar mexer nele */}
       <Header
         titulo={titulo}
         setPagina={setPagina}
@@ -272,8 +274,14 @@ function PaginaBase() {
         toggleSidebar={handleToggleSidebar}
       />
 
-      {/* Badge do Usuário (fixo no topo direito) */}
-      <UserBadge>
+      {/* Badge do Usuário */}
+      <UserBadge
+        onClick={() => {
+          setPagina("configuracoes");
+          setTitulo("Configurações");
+          setFiltro("configuracoes");
+        }}
+      >
         <Avatar>{iniciais}</Avatar>
         <UserText>
           <span className="name">{nomeUsuario}</span>
