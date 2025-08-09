@@ -141,6 +141,7 @@ function Dashboard({ setPagina, setTitulo }) {
   const [funcMap, setFuncMap] = useState({}); // idFuncionario -> nome
   const [showModal, setShowModal] = useState(false);
   const [showModalAtendimento, setShowModalAtendimento] = useState(false);
+  const [atualizarDados, setAtualizarDados] = useState(false);
 
   function pagRelatorios() {
     setPagina("relatorios");
@@ -246,7 +247,7 @@ function Dashboard({ setPagina, setTitulo }) {
     };
 
     fetchDados();
-  }, []);
+  }, [atualizarDados]);
 
   if (!dados) return <p>Carregando...</p>;
 
@@ -337,7 +338,7 @@ function Dashboard({ setPagina, setTitulo }) {
       </div>
 
       {showModal && <ModalCadastrarCliente onClose={() => setShowModal(false)} />}
-      {showModalAtendimento && <ModalNovoAtendimento onClose={() => setShowModalAtendimento(false)} />}
+      {showModalAtendimento && <ModalNovoAtendimento onCreate={()=>setAtualizarDados(true)} onClose={() => setShowModalAtendimento(false)} />}
     </Container>
   );
 }

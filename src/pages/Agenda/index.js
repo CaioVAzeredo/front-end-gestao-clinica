@@ -18,16 +18,14 @@ export default function Agenda() {
     const fetchDados = async () => {
       const agendas = await fetch(`http://localhost:${REACT_APP_PORT}/api/agendamentos`).then(res => res.json());
       setAgendamentos([
-        ...agendas.data.$values
+        ...agendas.data
     ]);
-      console.log(agendamentos, agendas.data.$values);
     };
 
     fetchDados();
   }, []);
   
   if (!agendamentos) return <p>Carregando...</p>;
-  console.log(agendamentos);
 
   // Dados simulados das atendimentos
   const events = [

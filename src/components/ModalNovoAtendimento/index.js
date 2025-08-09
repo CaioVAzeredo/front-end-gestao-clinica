@@ -47,7 +47,7 @@ const ModalContent = styled.div`
   .erro { color: red; font-size: 12px; margin-top: -4px; margin-bottom: 6px; }
 `;
 
-function ModalNovoAtendimento({ onClose }) {
+function ModalNovoAtendimento({ onCreate, onClose }) {
   const [atendimento, setAtendimento] = useState({
     clienteId: "",
     servicoId: "",
@@ -113,13 +113,13 @@ function ModalNovoAtendimento({ onClose }) {
     if (!validar()) return;
 
     try {
-      console.log("Salvando atendimento:", atendimento);
-      // await fetch(`http://localhost:${REACT_APP_PORT}/api/agendamentos`, {
-      //   method: "POST",
-      //   headers: { "Content-Type": "application/json" },
-      //   body: JSON.stringify(atendimento)
-      // });
+      await fetch(`http://localhost:${REACT_APP_PORT}/api/agendamentos`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(atendimento)
+      });
       alert("Atendimento cadastrado com sucesso!");
+      onCreate();
       onClose();
     } catch (error) {
       console.error("Erro ao cadastrar atendimento", error);
