@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 
+
 const REACT_APP_PORT = process.env.REACT_APP_PORT;
 
 const ModalOverlay = styled.div`
@@ -183,7 +184,6 @@ function ModalNovoAtendimento({ onClose, onSalvou }) {
     observacoes: "",
     statusAgenda: "HorarioMarcado"
   });
-
   const [erros, setErros] = useState({});
   const [salvando, setSalvando] = useState(false);
   const [isOpen, setIsOpen] = useState(true);
@@ -191,6 +191,8 @@ function ModalNovoAtendimento({ onClose, onSalvou }) {
   const [clientes, setClientes] = useState([]);
   const [servicos, setServicos] = useState([]);
   const [funcionarios, setFuncionarios] = useState([]);
+  const [salvando, setSalvando] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
 
   useEffect(() => {
     async function fetchData() {
@@ -231,8 +233,11 @@ function ModalNovoAtendimento({ onClose, onSalvou }) {
 
   async function salvarAtendimento(e) {
     e.preventDefault();
+  async function salvarAtendimento(e) {
+    e.preventDefault();
     if (!validar()) return;
 
+    setSalvando(true);
     setSalvando(true);
     try {
       const body = {
@@ -391,6 +396,15 @@ function ModalNovoAtendimento({ onClose, onSalvou }) {
             <option value="Concluido">Concluído</option>
           </select>
 
+          <div className="modal-actions">
+            <button type="button" className="cancelar" onClick={handleClose} disabled={salvando}>
+              Cancelar
+            </button>
+            <button type="submit" disabled={salvando}>
+              {salvando ? "Salvando..." : "Salvar"}
+            </button>
+          </div>
+        </form>
           <div className="modal-actions">
             <button type="button" className="cancelar" onClick={handleClose} disabled={salvando}>
               Cancelar
