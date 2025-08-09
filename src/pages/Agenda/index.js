@@ -4,9 +4,8 @@ import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"
-import { Plus } from "lucide-react"
-import { Button } from "../../components/ui/button"
 import ModalEditarAgendamento from "../../components/ModalEditarAgendamento"
+import ModalNovoAtendimento from "../../components/ModalNovoAtendimento";
 
 const REACT_APP_PORT = process.env.REACT_APP_PORT;
 
@@ -42,6 +41,8 @@ export default function Agenda() {
   const [funcionarios, setFuncionarios] = useState([]);
   const [selected, setSelected] = useState(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [showModalAtendimento, setShowModalAtendimento] = useState(false);
+    const [atualizarDados, setAtualizarDados] = useState(false);
 
   // Carrega dados
   useEffect(() => {
@@ -67,9 +68,9 @@ export default function Agenda() {
   // Cores por status
   const statusColors = {
     HorarioMarcado: { backgroundColor: 'hsl(var(--primary) / 0.8)', borderColor: 'hsl(var(--primary))' },
-    Pendente:       { backgroundColor: 'hsl(var(--secondary) / 0.8)', borderColor: 'hsl(var(--secondary))' },
-    Cancelado:      { backgroundColor: 'rgba(220, 38, 38, 0.2)', borderColor: 'rgb(220, 38, 38)' },
-    Concluido:      { backgroundColor: 'rgba(34, 197, 94, 0.2)', borderColor: 'rgb(34, 197, 94)' }
+    Pendente: { backgroundColor: 'hsl(var(--secondary) / 0.8)', borderColor: 'hsl(var(--secondary))' },
+    Cancelado: { backgroundColor: 'rgba(220, 38, 38, 0.2)', borderColor: 'rgb(220, 38, 38)' },
+    Concluido: { backgroundColor: 'rgba(34, 197, 94, 0.2)', borderColor: 'rgb(34, 197, 94)' }
   };
 
   // Backend -> FullCalendar
@@ -80,17 +81,17 @@ export default function Agenda() {
       const start = new Date(ag.dataHoraInicio);
       const end = addMinutes(start, ag?.duracaoAtendimento ?? 0);
 
-      const clienteNome     = ag?.cliente?.nome?.trim() || 'Cliente';
-      const servicoNome     = ag?.servico?.nomeServico || 'Serviço';
+      const clienteNome = ag?.cliente?.nome?.trim() || 'Cliente';
+      const servicoNome = ag?.servico?.nomeServico || 'Serviço';
       const funcionarioNome = ag?.funcionario?.nome || 'Funcionário';
 
       const status = ag?.statusAgenda || 'HorarioMarcado';
-      const color  = statusColors[status] || statusColors['HorarioMarcado'];
+      const color = statusColors[status] || statusColors['HorarioMarcado'];
 
       // extrai ids “flat” com fallback para objetos aninhados
-      const servicoId      = ag?.servicoId      ?? ag?.servico?.idServico      ?? null;
-      const funcionarioId  = ag?.funcionarioId  ?? ag?.funcionario?.idFuncionario ?? null;
-      const clienteId      = ag?.clienteId      ?? ag?.cliente?.idCliente      ?? null;
+      const servicoId = ag?.servicoId ?? ag?.servico?.idServico ?? null;
+      const funcionarioId = ag?.funcionarioId ?? ag?.funcionario?.idFuncionario ?? null;
+      const clienteId = ag?.clienteId ?? ag?.cliente?.idCliente ?? null;
 
       return {
         id: String(idAgendamento), // <- FullCalendar ID
@@ -243,13 +244,12 @@ export default function Agenda() {
           <h1 className="text-3xl font-bold tracking-tight text-foreground">
             Agenda de atendimentos
           </h1>
-          
+
         </div>
-        <div className="flex gap-2">
-          <Button onClick={() => alert('Abrir fluxo de novo agendamento (implemente o modal/criação aqui)')}>
-            <Plus className="h-4 w-4 mr-2" />
-            Agendar
-          </Button>
+        
+
+        <div className="actions">
+          <button onClick={() => setShowModalAtendimento(true)}>Agendar Atendimento</button>
         </div>
       </div>
 
@@ -305,6 +305,7 @@ export default function Agenda() {
         onCancel={handleCloseDialog}
         onSubmit={handleSubmitModal}
       />
+      {showModalAtendimento && <ModalNovoAtendimento onCreate={() => setAtualizarDados(true)} onClose={() => setShowModalAtendimento(false)} />}
     </div>
   )
 }
